@@ -1,0 +1,19 @@
+[package]
+name = "MetricsTest"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+lambda_runtime = "0.8.1"
+metrics = "0.21"
+metrics_cloudwatch_embedded = { path = "../metrics_cloudwatch_embedded" }
+serde = "1.0.136"
+tokio = { version = "1", features = ["macros"] }
+tracing = { version = "0.1", features = ["log"] }
+tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt", "env-filter"] }
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"

@@ -10,6 +10,7 @@ use std::collections::{BTreeMap, HashMap};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{mpsc, Arc, Mutex};
 use std::time::{SystemTime, UNIX_EPOCH};
+use tracing::error;
 
 /// The Embedded Metric Format supports a maximum of 100 values per key
 const MAX_HISTOGRAM_VALUES: usize = 100;
@@ -27,9 +28,10 @@ struct HistogramHandle {
 
 impl metrics::HistogramFn for HistogramHandle {
     // Sends the metric value to our sync_channel
-    // silently fails if we already have MAX_HISTOGRAM_VALUES values
     fn record(&self, value: f64) {
-        self.sender.send(value).ok();
+        if !self.sender.send(value).is_ok() {
+            error!("Failed to record histogram value, more than 100 unflushed values?");
+        }
     }
 }
 
@@ -57,12 +59,9 @@ struct HistogramInfo {
 /// This lives within a mutex
 struct CollectorState {
     /// Tree of labels to name to metric details
-    /// We use metrics::Key for the inner map because metrics::Key::name() returns a &str
-    /// otherwise we could use SharedString to save a little memory
     info_tree: BTreeMap<Vec<metrics::Label>, BTreeMap<metrics::Key, MetricInfo>>,
     /// Store units seperate because describe_xxx isn't scoped to labels
-    /// Key is a String because metrics::Key::name() returns a &str
-    /// otherwise we could use SharedString to save a little memory
+    /// Key is a copied String until at least metrics cl #381 is released in metrics
     units: HashMap<String, metrics::Unit>,
     /// Properties to be written with metrics
     properties: BTreeMap<SharedString, Value>,
@@ -275,11 +274,18 @@ impl metrics::Recorder for Collector {
         // Does this metric already exist?
         if let Some(label_info) = state.info_tree.get_mut(&labels) {
             if let Some(info) = label_info.get(key) {
-                if let MetricInfo::Counter(info) = info {
-                    return metrics::Counter::from_arc(info.value.clone());
-                } else {
-                    // Name already registered as something other than a counter
-                    return metrics::Counter::noop();
+                match info {
+                    MetricInfo::Counter(info) => {
+                        return metrics::Counter::from_arc(info.value.clone());
+                    }
+                    MetricInfo::Gauge(_) => {
+                        error!("Unable to register {key} as a counter as it was already registered as a gauge");
+                        return metrics::Counter::noop();
+                    }
+                    MetricInfo::Histogram(_) => {
+                        error!("Unable to register {key} as a counter as it was already registered as a histogram");
+                        return metrics::Counter::noop();
+                    }
                 }
             } else {
                 // Label exists, counter does not
@@ -309,11 +315,18 @@ impl metrics::Recorder for Collector {
         // Does this metric already exist?
         if let Some(label_info) = state.info_tree.get_mut(&labels) {
             if let Some(info) = label_info.get(key) {
-                if let MetricInfo::Gauge(info) = info {
-                    return metrics::Gauge::from_arc(info.value.clone());
-                } else {
-                    // Name already registered as something other than a gauge
-                    return metrics::Gauge::noop();
+                match info {
+                    MetricInfo::Gauge(info) => {
+                        return metrics::Gauge::from_arc(info.value.clone());
+                    }
+                    MetricInfo::Counter(_) => {
+                        error!("Unable to register {key} as a gauge as it was already registered as a counter");
+                        return metrics::Gauge::noop();
+                    }
+                    MetricInfo::Histogram(_) => {
+                        error!("Unable to register {key} as a gauge as it was already registered as a histogram");
+                        return metrics::Gauge::noop();
+                    }
                 }
             } else {
                 // Label exists, gauge does not
@@ -343,14 +356,21 @@ impl metrics::Recorder for Collector {
         // Does this metric already exist?
         if let Some(label_info) = state.info_tree.get_mut(&labels) {
             if let Some(info) = label_info.get(key) {
-                if let MetricInfo::Histogram(info) = info {
-                    let histogram = Arc::new(HistogramHandle {
-                        sender: info.sender.clone(),
-                    });
-                    return metrics::Histogram::from_arc(histogram);
-                } else {
-                    // Name already registered as something other than a histogram
-                    return metrics::Histogram::noop();
+                match info {
+                    MetricInfo::Histogram(info) => {
+                        let histogram = Arc::new(HistogramHandle {
+                            sender: info.sender.clone(),
+                        });
+                        return metrics::Histogram::from_arc(histogram);
+                    }
+                    MetricInfo::Counter(_) => {
+                        error!("Unable to register {key} as a histogram as it was already registered as a counter");
+                        metrics::Histogram::noop();
+                    }
+                    MetricInfo::Gauge(_) => {
+                        error!("Unable to register {key} as a histogram as it was already registered as a gauge");
+                        return metrics::Histogram::noop();
+                    }
                 }
             } else {
                 // Label exists, histogram does not

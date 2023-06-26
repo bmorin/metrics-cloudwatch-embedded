@@ -34,11 +34,11 @@ metrics
 Limitations
 -----------
 * Histograms retain up to 100 values (the maximum for a single metric document) between calls to `Collector::flush()`, 
-overflow is silently dropped
+overflow will report an error to the tracing crate
 * Dimensions set at initialization via `Builder::with_dimension(...)` may not overlap with metric labels
 * Only the subset of metric units in `metrics::Unit` are supported
 [https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_MetricDatum.html]
-* Registering different metric types with the same `metrics::Key` will silently fail
+* Registering different metric types with the same `metrics::Key` will fail with an error to the tracing crate
 
 Thanks
 ------

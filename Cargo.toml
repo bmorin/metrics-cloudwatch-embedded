@@ -6,6 +6,11 @@ edition = "2021"
 
 description = "CloudWatch embedded metrics format emitter for the metrics crate"
 license = "Apache-2.0"
+documentation = "https://docs.rs/metrics_cloudwatch_embedded"
+homepage = "https://github.com/BMorinDrifter/metrics_cloudwatch_embedded"
+repository = "https://github.com/BMorinDrifter/metrics_cloudwatch_embedded"
+readme = "README.md"
+keywords = ["metrics", "cloudwatch", "aws"]
 
 [profile.release]
 opt-level = "z"

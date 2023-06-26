@@ -3,7 +3,9 @@
 //!
 //! Counters, Gauges and Histograms are supported.  
 //!
-//! __This is an initial release and the interface is not stable__
+//! __The interface is not stable__
+//!
+//! __This is a Minimum Viable Product for feedback, experimentation and iteration__
 //!
 //! # Example
 //! ```

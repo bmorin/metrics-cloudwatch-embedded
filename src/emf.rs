@@ -1,9 +1,12 @@
+//! # EMF
+//!
+//! Helpers for serializing CloudWatch Embedded Metrics via serde_json
+//!
+//! <https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Embedded_Metric_Format_Specification.html>
+
 use serde::Serialize;
 use serde_json::value::Value;
 use std::collections::BTreeMap;
-
-/// Helpers for serializing CloudWatch Embedded Metrics via serde_json
-/// https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Embedded_Metric_Format_Specification.html
 
 #[derive(Serialize)]
 pub struct EmbeddedMetrics<'a> {
@@ -44,9 +47,10 @@ pub struct EmbeddedMetric<'a> {
     pub unit: Option<&'a str>,
 }
 
-// Convert a metrics::Unit into the cloudwatch string
-// https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_MetricDatum.html
-pub fn unit_to_string(unit: &metrics::Unit) -> &'static str {
+/// Convert a metrics::Unit into the cloudwatch string
+///
+/// <https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_MetricDatum.html>
+pub fn unit_to_str(unit: &metrics::Unit) -> &'static str {
     match unit {
         metrics::Unit::Count => "Count",
         metrics::Unit::Percent => "Percent",
@@ -101,19 +105,19 @@ mod tests {
 
         metrics_test.aws.cloudwatch_metrics[0].metrics.push(EmbeddedMetric {
             name: "FrameTime",
-            unit: Some(unit_to_string(&metrics::Unit::Milliseconds)),
+            unit: Some(unit_to_str(&metrics::Unit::Milliseconds)),
         });
         metrics_test.values.insert("FrameTime", json!(10.0));
 
         metrics_test.aws.cloudwatch_metrics[0].metrics.push(EmbeddedMetric {
             name: "CpuUsage",
-            unit: Some(unit_to_string(&metrics::Unit::Percent)),
+            unit: Some(unit_to_str(&metrics::Unit::Percent)),
         });
         metrics_test.values.insert("CpuUsage", json!(5.5));
 
         metrics_test.aws.cloudwatch_metrics[0].metrics.push(EmbeddedMetric {
             name: "MemoryUsage",
-            unit: Some(unit_to_string(&metrics::Unit::Kibibytes)),
+            unit: Some(unit_to_str(&metrics::Unit::Kibibytes)),
         });
         metrics_test.values.insert("MemoryUsage", json!(10 * 1024));
 

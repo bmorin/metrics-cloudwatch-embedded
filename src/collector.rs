@@ -1,15 +1,17 @@
+//! # Collector
+//!
+//! Metrics Collector + Emitter returned from metrics_cloudwatch_embedded::Builder
+
 #![allow(dead_code)]
-use super::*;
+use super::emf;
 use metrics::SharedString;
 use serde_json::value::Value;
-use std::collections::BTreeMap;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{mpsc, Arc, Mutex};
-use std::time::SystemTime;
-use std::time::UNIX_EPOCH;
+use std::time::{SystemTime, UNIX_EPOCH};
 
-// The Embedded Metric Format supports a maximum of 100 values per key
+/// The Embedded Metric Format supports a maximum of 100 values per key
 const MAX_HISTOGRAM_VALUES: usize = 100;
 
 /// Configuration via Builder
@@ -67,6 +69,22 @@ struct CollectorState {
 }
 
 /// Embedded CloudWatch Metrics Collector + Emitter
+///
+/// Use [Builder](super::Builder) to construct
+///
+/// # Example
+/// ```
+/// let metrics = metrics_cloudwatch_embedded::Builder::new()
+///      .cloudwatch_namespace("MyApplication")
+///      .init()
+///      .unwrap();
+///
+///  metrics::increment_counter!("requests", "Method" => "Default");
+///
+///  metrics
+///      .set_property("RequestId", "ABC123")
+///      .flush();
+/// ```
 pub struct Collector {
     state: Mutex<CollectorState>,
     config: Config,
@@ -84,7 +102,10 @@ impl Collector {
         }
     }
 
-    // Set a property to emit with the metrics
+    /// Set a property to emit with the metrics
+    /// * Properites persist accross flush calls
+    /// * Setting a property with same name multiple times will overwrite the previous value
+    /// * value types other than serde_json::Value::Number and serde_json::Value::String may not work
     pub fn set_property<'a>(&'a self, name: impl Into<SharedString>, value: impl Into<Value>) -> &'a Self {
         {
             let mut state = self.state.lock().unwrap();
@@ -93,7 +114,7 @@ impl Collector {
         self
     }
 
-    // Removes a property to emit with the metrics
+    /// Removes a property to emit with the metrics
     pub fn remove_property<'a>(&'a self, name: impl Into<&'a str>) -> &'a Self {
         {
             let mut state = self.state.lock().unwrap();
@@ -118,8 +139,6 @@ impl Collector {
 
     /// Flush the current counter values with the given timestamp to simplify unit testing
     pub fn flush_to_with_timestamp(&self, timestamp: u64, mut writer: impl std::io::Write) -> std::io::Result<()> {
-        let state = self.state.lock().unwrap();
-
         // CONSIDER: we may be able to save some allocations moving this into self.state
         // or perhaps doing a swap for default dimensions and properties???
         let mut emf = emf::EmbeddedMetrics {
@@ -142,6 +161,9 @@ impl Collector {
             emf.aws.cloudwatch_metrics[0].dimensions[0].push(&dimension.0);
             emf.dimensions.insert(&dimension.0, &dimension.1);
         }
+
+        // Delay aquiring the mutex until we need it
+        let state = self.state.lock().unwrap();
 
         for (key, value) in &state.properties {
             emf.properties.insert(key, value.clone());
@@ -167,7 +189,7 @@ impl Collector {
                         if value != 0 {
                             emf.aws.cloudwatch_metrics[0].metrics.push(emf::EmbeddedMetric {
                                 name: key.name(),
-                                unit: state.units.get(key.name()).map(emf::unit_to_string),
+                                unit: state.units.get(key.name()).map(emf::unit_to_str),
                             });
                             emf.values.insert(key.name(), value.into());
                             should_flush = true;
@@ -178,7 +200,7 @@ impl Collector {
 
                         emf.aws.cloudwatch_metrics[0].metrics.push(emf::EmbeddedMetric {
                             name: key.name(),
-                            unit: state.units.get(key.name()).map(emf::unit_to_string),
+                            unit: state.units.get(key.name()).map(emf::unit_to_str),
                         });
                         emf.values.insert(key.name(), value.into());
                         should_flush = true;
@@ -193,7 +215,7 @@ impl Collector {
                         if !values.is_empty() {
                             emf.aws.cloudwatch_metrics[0].metrics.push(emf::EmbeddedMetric {
                                 name: key.name(),
-                                unit: state.units.get(key.name()).map(emf::unit_to_string),
+                                unit: state.units.get(key.name()).map(emf::unit_to_str),
                             });
                             emf.values.insert(key.name(), values.into());
                             should_flush = true;

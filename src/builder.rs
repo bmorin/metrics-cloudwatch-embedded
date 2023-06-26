@@ -1,9 +1,21 @@
+//! # Builder
+//!
+//! Builder for metrics_cloudwatch_embedded::Collector
+
 #![allow(dead_code)]
-use super::*;
+use super::{collector, Error};
 use metrics::SharedString;
 use std::fmt;
 
-// Builder for the Embedded Cloudwatch Metrics Collector
+/// Builder for the Embedded Cloudwatch Metrics Collector
+///
+/// # Example
+/// ```
+///  let metrics = metrics_cloudwatch_embedded::Builder::new()
+///      .cloudwatch_namespace("MyApplication")
+///      .init()
+///      .unwrap();
+/// ```
 pub struct Builder {
     cloudwatch_namespace: Option<SharedString>,
     default_dimensions: Vec<(SharedString, SharedString)>,
@@ -17,7 +29,8 @@ impl Builder {
         }
     }
 
-    /// Sets the CloudWatch namespace for all metrics sent by this backend.
+    /// Sets the CloudWatch namespace for all metrics
+    /// * Must be set or init() will return Err("cloudwatch_namespace missing")
     pub fn cloudwatch_namespace(self, namespace: impl Into<SharedString>) -> Self {
         Self {
             cloudwatch_namespace: Some(namespace.into()),
@@ -26,7 +39,8 @@ impl Builder {
     }
 
     /// Adds a static dimension (name, value), that will be sent with each MetricDatum.
-    /// This method can be called multiple times.
+    /// * This method can be called multiple times with distinct names
+    /// * Dimention names may not overlap with metrics::Label names
     pub fn with_dimension(mut self, name: impl Into<SharedString>, value: impl Into<SharedString>) -> Self {
         self.default_dimensions.push((name.into(), value.into()));
         self
@@ -40,7 +54,7 @@ impl Builder {
         })
     }
 
-    // Intialize the metrics collector including the call to metrics::set_recorder
+    /// Intialize the metrics collector including the call to metrics::set_recorder
     pub fn init(self) -> Result<&'static collector::Collector, Error> {
         let config = self.build()?;
         let collector = Box::leak(Box::new(collector::Collector::new(config)));

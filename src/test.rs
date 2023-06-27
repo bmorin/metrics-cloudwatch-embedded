@@ -14,16 +14,26 @@ mod tests {
             .init()
             .unwrap();
 
-        metrics::increment_counter!("success", "module" => "directory", "api" => "check_reserve");
-        metrics::increment_counter!("not_found", "module" => "directory", "api" => "check_reserve");
-        metrics::increment_counter!("success", "module" => "directory", "api" => "check_reserve");
+        metrics::describe_counter!("success", metrics::Unit::Count, "");
+        metrics::describe_histogram!("runtime", metrics::Unit::Milliseconds, "");
+
+        metrics::increment_counter!("success", "module" => "directory", "api" => "a_function");
+        metrics::increment_counter!("not_found", "module" => "directory", "api" => "a_function");
+        metrics::describe_counter!("not_found", metrics::Unit::Count, "");
+        metrics::increment_counter!("success", "module" => "directory", "api" => "b_function");
+        metrics::increment_counter!("success", "module" => "directory", "api" => "a_function");
+        metrics::gauge!("thing", 3.14, "module" => "directory", "api" => "a_function");
+        metrics::histogram!("runtime", 4.0, "module" => "directory", "api" => "a_function");
+        metrics::gauge!("thing", 7.11, "module" => "directory", "api" => "a_function");
+        metrics::histogram!("runtime", 5.0, "module" => "directory", "api" => "a_function");
 
         let mut output = Vec::new();
         metrics.flush_to_with_timestamp(1687657545423, &mut output).unwrap();
         let output_str = std::str::from_utf8(&output).unwrap();
         assert_eq!(
             output_str,
-            r#"{"_aws":{"Timestamp":1687657545423,"CloudWatchMetrics":[{"Namespace":"namespace","Dimensions":[["Address","Port","module","api"]],"Metrics":[{"Name":"not_found"},{"Name":"success"}]}]},"Address":"10.172.207.225","Port":"7779","api":"check_reserve","module":"directory","not_found":1,"success":2}
+            r#"{"_aws":{"Timestamp":1687657545423,"CloudWatchMetrics":[{"Namespace":"namespace","Dimensions":[["Address","Port","module","api"]],"Metrics":[{"Name":"not_found","Unit":"Count"},{"Name":"runtime","Unit":"Milliseconds"},{"Name":"success","Unit":"Count"},{"Name":"thing"}]}]},"Address":"10.172.207.225","Port":"7779","api":"a_function","module":"directory","not_found":1,"runtime":[4.0,5.0],"success":2,"thing":4614253070214989087}
+{"_aws":{"Timestamp":1687657545423,"CloudWatchMetrics":[{"Namespace":"namespace","Dimensions":[["Address","Port","module","api"]],"Metrics":[{"Name":"success","Unit":"Count"}]}]},"Address":"10.172.207.225","Port":"7779","api":"b_function","module":"directory","success":1}
 "#
         );
     }

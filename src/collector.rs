@@ -15,6 +15,9 @@ use tracing::error;
 /// The Embedded Metric Format supports a maximum of 100 values per key
 const MAX_HISTOGRAM_VALUES: usize = 100;
 
+/// The Embedded Metric Format supports a maximum of 30 dimensions per metric
+const MAX_DIMENSIONS: usize = 30;
+
 /// Configuration via Builder
 pub struct Config {
     pub cloudwatch_namespace: SharedString,
@@ -152,7 +155,7 @@ impl Collector {
 
         emf.aws.cloudwatch_metrics.push(emf::EmbeddedNamespace {
             namespace: &self.config.cloudwatch_namespace,
-            dimensions: vec![Vec::new()],
+            dimensions: vec![Vec::with_capacity(MAX_DIMENSIONS)],
             metrics: Vec::new(),
         });
 
@@ -269,6 +272,11 @@ impl metrics::Recorder for Collector {
         // Build our own copy of the labels before aquiring the mutex
         let labels: Vec<metrics::Label> = key.labels().cloned().collect();
 
+        if self.config.default_dimensions.len() + labels.len() > MAX_DIMENSIONS {
+            error!("Unable to register counter {key} as it has more than {MAX_DIMENSIONS} dimensions/labels");
+            return metrics::Counter::noop();
+        }
+
         let mut state = self.state.lock().unwrap();
 
         // Does this metric already exist?
@@ -279,11 +287,11 @@ impl metrics::Recorder for Collector {
                         return metrics::Counter::from_arc(info.value.clone());
                     }
                     MetricInfo::Gauge(_) => {
-                        error!("Unable to register {key} as a counter as it was already registered as a gauge");
+                        error!("Unable to register counter {key} as it was already registered as a gauge");
                         return metrics::Counter::noop();
                     }
                     MetricInfo::Histogram(_) => {
-                        error!("Unable to register {key} as a counter as it was already registered as a histogram");
+                        error!("Unable to register counter {key} as it was already registered as a histogram");
                         return metrics::Counter::noop();
                     }
                 }
@@ -310,6 +318,13 @@ impl metrics::Recorder for Collector {
         // Build our own copy of the labels before aquiring the mutex
         let labels: Vec<metrics::Label> = key.labels().cloned().collect();
 
+        if self.config.default_dimensions.len() + labels.len() > MAX_DIMENSIONS {
+            error!(
+                "Unable to register counter {key} as a gauge as it has more than {MAX_DIMENSIONS} dimensions/labels"
+            );
+            return metrics::Gauge::noop();
+        }
+
         let mut state = self.state.lock().unwrap();
 
         // Does this metric already exist?
@@ -320,11 +335,11 @@ impl metrics::Recorder for Collector {
                         return metrics::Gauge::from_arc(info.value.clone());
                     }
                     MetricInfo::Counter(_) => {
-                        error!("Unable to register {key} as a gauge as it was already registered as a counter");
+                        error!("Unable to register gauge {key} as it was already registered as a counter");
                         return metrics::Gauge::noop();
                     }
                     MetricInfo::Histogram(_) => {
-                        error!("Unable to register {key} as a gauge as it was already registered as a histogram");
+                        error!("Unable to register gauge {key} as it was already registered as a histogram");
                         return metrics::Gauge::noop();
                     }
                 }
@@ -351,6 +366,11 @@ impl metrics::Recorder for Collector {
         // Build our own copy of the labels before aquiring the mutex
         let labels: Vec<metrics::Label> = key.labels().cloned().collect();
 
+        if self.config.default_dimensions.len() + labels.len() > MAX_DIMENSIONS {
+            error!("Unable to register histogram {key} as it has more than {MAX_DIMENSIONS} dimensions/labels");
+            return metrics::Histogram::noop();
+        }
+
         let mut state = self.state.lock().unwrap();
 
         // Does this metric already exist?
@@ -364,11 +384,11 @@ impl metrics::Recorder for Collector {
                         return metrics::Histogram::from_arc(histogram);
                     }
                     MetricInfo::Counter(_) => {
-                        error!("Unable to register {key} as a histogram as it was already registered as a counter");
+                        error!("Unable to register histogram {key} as it was already registered as a counter");
                         metrics::Histogram::noop();
                     }
                     MetricInfo::Gauge(_) => {
-                        error!("Unable to register {key} as a histogram as it was already registered as a gauge");
+                        error!("Unable to register histogram {key} as it was already registered as a gauge");
                         return metrics::Histogram::noop();
                     }
                 }

@@ -56,7 +56,8 @@ impl Builder {
 
     /// Emits a cold start metric with the given name once to mark a cold start
     ///
-    /// This is to mimic the behavior of lambda power tools
+    /// *requires the `lambda` feature flag*
+    ///
     #[cfg(feature = "lambda")]
     pub fn lambda_cold_start_metric(mut self, name: &'static str) -> Self {
         self.lambda_cold_start = Some(name);
@@ -66,6 +67,8 @@ impl Builder {
     /// Decorates every metric with request_id from the lambda request context as a property
     /// with the given name
     ///
+    /// *requires the `lambda` feature flag*
+    ///
     #[cfg(feature = "lambda")]
     pub fn with_lambda_request_id(mut self, name: &'static str) -> Self {
         self.lambda_request_id = Some(name);
@@ -74,6 +77,8 @@ impl Builder {
 
     /// Decorates every metric with lambda_xray_trace_id from the lambda request context as a property
     /// with the given name
+    ///
+    /// *requires the `lambda` feature flag*
     ///
     #[cfg(feature = "lambda")]
     pub fn with_lambda_xray_trace_id(mut self, name: &'static str) -> Self {
@@ -95,7 +100,7 @@ impl Builder {
         })
     }
 
-    /// Intialize the metrics collector including the call to metrics::set_recorder
+    /// Intialize the metrics collector including the call to [metrics::set_recorder]
     pub fn init(self) -> Result<&'static collector::Collector, Error> {
         let config = self.build()?;
         let collector = Box::leak(Box::new(collector::Collector::new(config)));

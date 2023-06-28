@@ -53,5 +53,7 @@ pub use {builder::Builder, collector::Collector};
 mod builder;
 mod collector;
 mod emf;
+#[cfg(feature = "lambda")]
+pub mod lambda;
 #[cfg(test)]
 mod test;

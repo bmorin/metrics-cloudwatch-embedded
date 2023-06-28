@@ -1,7 +1,7 @@
 #![allow(non_snake_case)]
 use lambda_runtime::{run, service_fn, Error, LambdaEvent};
-
 use serde::{Deserialize, Serialize};
+use tower::ServiceExt;
 
 #[derive(Deserialize)]
 struct Request {}
@@ -21,9 +21,7 @@ async fn function_handler(
 
     metrics::increment_counter!("requests", "Method" => "Default");
 
-    metrics
-        .set_property("RequestId", event.context.request_id)
-        .flush()?;
+    metrics.set_property("RequestId", event.context.request_id).flush()?;
     Ok(resp)
 }
 
@@ -38,12 +36,20 @@ async fn main() -> Result<(), Error> {
 
     let metrics = metrics_cloudwatch_embedded::Builder::new()
         .cloudwatch_namespace("MetricsTest")
-        .with_dimension(
-            "Function",
-            std::env::var("AWS_LAMBDA_FUNCTION_NAME").unwrap(),
-        )
+        .with_dimension("Function", std::env::var("AWS_LAMBDA_FUNCTION_NAME").unwrap())
         .init()
         .unwrap();
 
-    run(service_fn(|event| function_handler(metrics, event))).await
+    let service = service_fn(|event| function_handler(metrics, event))
+        .filter(|request| {
+            let result: Result<LambdaEvent<Request>, Error> = Ok(request);
+            
+            result
+        })
+        .then(|result| async move {
+            metrics.flush()?;
+            result
+        });
+
+    run(service).await
 }

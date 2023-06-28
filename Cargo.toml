@@ -12,14 +12,23 @@ repository = "https://github.com/BMorinDrifter/metrics-cloudwatch-embedded"
 readme = "README.md"
 keywords = ["metrics", "cloudwatch", "aws"]
 
+[features]
+default = ["lambda"]
+lambda = ["dep:http", "dep:lambda_http", "dep:lambda_runtime", "dep:pin-project", "dep:tower"]
+
+[dependencies]
+http = { version = "0.2", optional = true }
+lambda_http = { version = "0.8.1", optional = true }
+lambda_runtime = { version = "0.8.1", optional = true }
+metrics = "0.21"
+pin-project = { version = "1", optional = true }
+serde = {version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tower = {version = "0.4", optional = true }
+tracing = "0.1"
+
 [profile.release]
 opt-level = "z"
 lto = true
 codegen-units = 1
 panic = "abort"
-
-[dependencies]
-metrics = "0.21"
-serde = {version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-tracing = "0.1"

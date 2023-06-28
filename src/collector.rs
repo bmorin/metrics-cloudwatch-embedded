@@ -22,6 +22,12 @@ const MAX_DIMENSIONS: usize = 30;
 pub struct Config {
     pub cloudwatch_namespace: SharedString,
     pub default_dimensions: Vec<(SharedString, SharedString)>,
+    #[cfg(feature = "lambda")]
+    pub lambda_cold_start: Option<&'static str>,
+    #[cfg(feature = "lambda")]
+    pub lambda_request_id: Option<&'static str>,
+    #[cfg(feature = "lambda")]
+    pub lambda_xray_trace_id: Option<&'static str>,
 }
 
 /// Histogram Handler implemented as mpsc::SyncSender<f64>
@@ -89,7 +95,7 @@ struct CollectorState {
 /// ```
 pub struct Collector {
     state: Mutex<CollectorState>,
-    config: Config,
+    pub config: Config,
 }
 
 impl Collector {
@@ -171,7 +177,7 @@ impl Collector {
             emf.properties.insert(key, value.clone());
         }
 
-        // Emit an embedded metrics string for each distinct label set
+        // Emit an embedded metrics document for each distinct label set
         for (labels, metrics) in &state.info_tree {
             emf.aws.cloudwatch_metrics[0].metrics.clear();
             emf.values.clear();

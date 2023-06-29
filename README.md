@@ -14,9 +14,6 @@ Purpose
 Provide a backend for the [`metrics` facade crate](https://crates.io/crates/metrics), 
 to emit metrics in [CloudWatch Embedded Metrics Format](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Embedded_Metric_Format_Specification.html)
 
-Intended for use with the [`lambda_runtime`](https://crates.io/crates/lambda_runtime), however `Collector::flush_to(...)` could be used 
-for anything that writes logs that end up in CloudWatch.
-
 Simple Example
 --------------
 
@@ -35,8 +32,13 @@ metrics
 
 AWS Lambda Example
 ------------------
+The Lambda Runtime intergration feature handles flushing metrics after each invoke via either
+`run()` alternatives or `MetricService` that inplements the `tower::Service` trait.
+It also provides optional helpers for emiting a metric on cold starts and decorating metric
+documents with request id and/or x-ray trace id.
 
-In your Cargo.toml
+
+In your Cargo.toml add:
 ```toml
 metrics_cloudwatch_embedded = {  version = "0.3", features = ["lambda"] }
 ```
@@ -84,14 +86,14 @@ async fn main() -> Result<(), Error> {
 Limitations
 -----------
 * Histograms retain up to 100 values (the maximum for a single metric document) between calls to
-[Collector::flush()](collector::Collector::flush), overflow will report an error via the [tracing] crate
-* Dimensions set at initialization via [Builder::with_dimension(...)][builder::Builder::with_dimension]
-may not overlap with metric [labels](metrics::Label)
-* Only the subset of metric units in [metrics::Unit] are supported
+`collector::Collector::flush`, overflow will report an error via the `tracing` crate
+* Dimensions set at initialization via `Builder::with_dimension(...)`
+may not overlap with metric `labels`
+* Only the subset of metric units in `metrics::Unit` are supported
 <https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_MetricDatum.html>
-* Registering different metric types with the same [metrics::Key] will fail with an error via the [tracing] crate
+* Registering different metric types with the same `metrics::Key` will fail with an error via the `tracing` crate
 * The Embedded Metric Format supports a maximum of 30 dimensions per metric, attempting to register a metric with
-more than 30 dimensions/labels will fail with an error via the [tracing] crate
+more than 30 dimensions/labels will fail with an error via the `tracing` crate
 
 Thanks
 ------

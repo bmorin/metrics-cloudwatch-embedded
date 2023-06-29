@@ -23,7 +23,7 @@
 //!
 //! # Implementation Details
 //!
-//! Intended for use with the AWS lambda_runtime, however [Collector::flush_to(...)](collector::Collector::flush_to)
+//! Intended for use with the [lambda_runtime], however [Collector::flush_to(...)](collector::Collector::flush_to)
 //! could be used for anything that writes logs that end up in CloudWatch.
 //!
 //! * Counters are Guages are implented as [AtomicU64](std::sync::atomic::AtomicU64) via the
@@ -38,20 +38,25 @@
 //!
 //! # Limitations
 //! * Histograms retain up to 100 values (the maximum for a single metric document) between calls to
-//! [Collector::flush()](collector::Collector::flush), overflow will report an error to the [tracing] crate
+//! [Collector::flush()](collector::Collector::flush), overflow will report an error via the [tracing] crate
 //! * Dimensions set at initialization via [Builder::with_dimension(...)][builder::Builder::with_dimension]
 //! may not overlap with metric [labels](metrics::Label)
 //! * Only the subset of metric units in [metrics::Unit] are supported
 //! <https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_MetricDatum.html>
-//! * Registering different metric types with the same [metrics::Key] will fail with an error to the [tracing] crate
+//! * Registering different metric types with the same [metrics::Key] will fail with an error via the [tracing] crate
+//! * The Embedded Metric Format supports a maximum of 30 dimensions per metric, attempting to register a metric with
+//! more than 30 dimensions/labels will fail with an error via the [tracing] crate
 //!
 
-pub type Error = Box<dyn std::error::Error + Send + Sync + 'static>;
-
 pub use {builder::Builder, collector::Collector};
+
+#[doc(hidden)]
+pub type Error = Box<dyn std::error::Error + Send + Sync + 'static>;
 
 mod builder;
 mod collector;
 mod emf;
+#[cfg(feature = "lambda")]
+pub mod lambda;
 #[cfg(test)]
 mod test;

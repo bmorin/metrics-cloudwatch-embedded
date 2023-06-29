@@ -32,10 +32,10 @@ metrics
 
 AWS Lambda Example
 ------------------
-The Lambda Runtime intergration feature handles flushing metrics after each invoke via either
-`run()` alternatives or `MetricService` that inplements the `tower::Service` trait.
-It also provides optional helpers for emiting a metric on cold starts and decorating metric
-documents with request id and/or x-ray trace id.
+The Lambda Runtime intergration feature handles flushing metrics after each invoke via either `run()` 
+alternatives or `MetricService` which inplements the [`tower::Service`](https://crates.io/crates/tower) trait.
+It also provides optional helpers for emiting a metric on cold starts and decorating metric documents with 
+request id and/or x-ray trace id.
 
 
 In your Cargo.toml add:

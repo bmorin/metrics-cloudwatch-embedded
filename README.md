@@ -40,7 +40,7 @@ request id and/or x-ray trace id.
 
 In your Cargo.toml add:
 ```toml
-metrics_cloudwatch_embedded = {  version = "0.3", features = ["lambda"] }
+metrics_cloudwatch_embedded = {  version = "0.3.1", features = ["lambda"] }
 ```
 
 ```rust

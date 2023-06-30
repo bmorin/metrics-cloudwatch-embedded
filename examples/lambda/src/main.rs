@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 use lambda_runtime::{Error, LambdaEvent};
 use metrics_cloudwatch_embedded::lambda::handler::run;
 use serde::{Deserialize, Serialize};

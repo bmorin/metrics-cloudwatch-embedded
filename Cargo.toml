@@ -1,6 +1,6 @@
 [package]
 name = "metrics_cloudwatch_embedded"
-version = "0.3.0"
+version = "0.3.1"
 authors = ["brianmorin <brianmorin@drifter.games>"]
 edition = "2021"
 

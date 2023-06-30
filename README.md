@@ -55,7 +55,7 @@ struct Request {}
 struct Response {
 }
 
-async fn function_handler(event: LambdaEvent<()>) -> Result<Response, Error> {
+async fn function_handler(event: LambdaEvent<Request>) -> Result<Response, Error> {
     metrics::increment_counter!("requests", "Method" => "Default");
 
     Ok( Response {})

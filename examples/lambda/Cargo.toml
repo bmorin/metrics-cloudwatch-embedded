@@ -1,13 +1,13 @@
 [package]
-name = "MetricsTest"
+name = "lambda-test"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-lambda_runtime = "0.8.1"
+lambda_runtime = "0.8"
 metrics = "0.21"
-metrics_cloudwatch_embedded = { path = "..", features = ["lambda"] }
-serde = "1.0.136"
+metrics_cloudwatch_embedded = { path = "../..", features = ["lambda"] }
+serde = {version = "1.0", features = ["derive"] }
 tokio = { version = "1", features = ["macros"] }
 tracing = { version = "0.1", features = ["log"] }
 tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt", "env-filter"] }

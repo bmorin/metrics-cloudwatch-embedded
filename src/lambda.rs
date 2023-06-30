@@ -182,10 +182,11 @@ pub mod service {
 
     /// Start the Lambda Rust runtime with a given [tower::Service<lambda_http::Request>]
     /// which is then wrapped by new [MetricsService] with a given [Collector]
-    async fn run_http<'a, R, S, E>(metrics: &'static Collector, inner: S) -> Result<(), lambda_runtime::Error>
+    pub async fn run_http<'a, R, S, E>(metrics: &'static Collector, inner: S) -> Result<(), lambda_runtime::Error>
     where
         S: tower::Service<lambda_http::Request, Response = R, Error = E>,
         S::Future: Send + 'a,
+        S::Error: std::fmt::Debug + std::fmt::Display,
         R: lambda_http::IntoResponse,
         E: std::fmt::Debug + std::fmt::Display,
     {
@@ -222,12 +223,14 @@ pub mod handler {
 
     /// Start the Lambda Rust runtime with a given [lambda_http::Request] handler function
     /// which is then wrapped by a new [MetricsService] with a given [Collector]
-    pub async fn run_http<'a, R, T, F, E>(metrics: &'static Collector, handler: T) -> Result<(), lambda_runtime::Error>
+    pub async fn run_http<'a, T, F, Response>(
+        metrics: &'static Collector,
+        handler: T,
+    ) -> Result<(), lambda_runtime::Error>
     where
         T: FnMut(lambda_http::Request) -> F,
-        F: Future<Output = Result<R, lambda_runtime::Error>> + Send + 'a,
-        R: lambda_http::IntoResponse,
-        E: std::fmt::Debug + std::fmt::Display,
+        F: Future<Output = Result<Response, lambda_runtime::Error>> + Send + 'a,
+        Response: lambda_http::IntoResponse,
     {
         super::service::run(metrics, lambda_http::Adapter::from(lambda_http::service_fn(handler))).await
     }

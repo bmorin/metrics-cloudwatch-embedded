@@ -23,6 +23,7 @@ pub struct Builder {
 }
 
 impl Builder {
+    #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         Builder {
             cloudwatch_namespace: Default::default(),

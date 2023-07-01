@@ -38,7 +38,7 @@ struct HistogramHandle {
 impl metrics::HistogramFn for HistogramHandle {
     // Sends the metric value to our sync_channel
     fn record(&self, value: f64) {
-        if !self.sender.send(value).is_ok() {
+        if self.sender.send(value).is_err() {
             error!("Failed to record histogram value, more than 100 unflushed values?");
         }
     }
@@ -114,7 +114,7 @@ impl Collector {
     /// * Properites persist accross flush calls
     /// * Setting a property with same name multiple times will overwrite the previous value
     /// * value types other than serde_json::Value::Number and serde_json::Value::String may not work
-    pub fn set_property<'a>(&'a self, name: impl Into<SharedString>, value: impl Into<Value>) -> &'a Self {
+    pub fn set_property(&self, name: impl Into<SharedString>, value: impl Into<Value>) -> &Self {
         {
             let mut state = self.state.lock().unwrap();
             state.properties.insert(name.into(), value.into());

@@ -3,6 +3,7 @@ name = "metrics_cloudwatch_embedded"
 version = "0.3.1"
 authors = ["brianmorin <brianmorin@drifter.games>"]
 edition = "2021"
+rust-version = "1.62.0"
 
 description = "CloudWatch embedded metrics format emitter for the metrics crate"
 license = "Apache-2.0"
@@ -18,8 +19,8 @@ lambda = ["dep:http", "dep:lambda_http", "dep:lambda_runtime", "dep:pin-project"
 
 [dependencies]
 http = { version = "0.2", optional = true }
-lambda_http = { version = "0.8.1", optional = true }
-lambda_runtime = { version = "0.8.1", optional = true }
+lambda_http = { version = "0.8", optional = true }
+lambda_runtime = { version = "0.8", optional = true }
 metrics = "0.21"
 pin-project = { version = "1", optional = true }
 serde = {version = "1.0", features = ["derive"] }

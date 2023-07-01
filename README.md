@@ -32,10 +32,10 @@ metrics
 
 AWS Lambda Example
 ------------------
-The Lambda Runtime intergration feature handles flushing metrics after each invoke via either `run()` 
-alternatives or `MetricService` which inplements the [`tower::Service`](https://crates.io/crates/tower) trait.
-It also provides optional helpers for emiting a metric on cold starts and decorating metric documents with 
-request id and/or x-ray trace id.
+The [Lambda Runtime](https://crates.io/crates/lambda-runtime) intergration feature handles flushing metrics 
+after each invoke via either `run()` alternatives or `MetricService` which inplements the 
+[`tower::Service`](https://crates.io/crates/tower) trait.  It also provides optional helpers for emiting a 
+metric on cold starts and decorating metric documents with request id and/or x-ray trace id.
 
 
 In your Cargo.toml add:
@@ -95,8 +95,28 @@ may not overlap with metric `labels`
 * The Embedded Metric Format supports a maximum of 30 dimensions per metric, attempting to register a metric with
 more than 30 dimensions/labels will fail with an error via the `tracing` crate
 
+Supported Rust Versions (MSRV)
+------------------------------
+
+The AWS Lambda Rust Runtime requires a minimum of Rust 1.62, and is not guaranteed to build on compiler versions earlier than that.
+
+We will attempt to match the [Lambda Runtime](https://crates.io/crates/lambda-runtime)
+
+License
+-------
+
+This project is licensed under the Apache-2.0 License.
+
+Apache-2.0 was chosen to match the [Lambda Runtime](https://crates.io/crates/lambda-runtime)
+
+Contribution
+------------
+
+Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
+licensed as above, without any additional terms or conditions.
+
 Thanks
 ------
 * Simon Andersson (ramn) and contributors - For the metrics_cloudwatch crate I used as a reference
 * Toby Lawrence (tobz) - For answering my metrics crate questions before I even had something working
-

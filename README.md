@@ -30,7 +30,7 @@ metrics
 AWS Lambda Example
 ------------------
 The [Lambda Runtime](https://crates.io/crates/lambda-runtime) intergration feature handles flushing metrics 
-after each invoke via either `run()` alternatives or `MetricService` which inplements the 
+after each invoke via either `run()` alternatives or `MetricService` which implements the 
 [`tower::Service`](https://crates.io/crates/tower) trait.  
 
 It also provides optional helpers for:

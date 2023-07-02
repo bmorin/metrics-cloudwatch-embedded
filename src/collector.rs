@@ -72,7 +72,7 @@ struct CollectorState {
     info_tree: BTreeMap<Vec<metrics::Label>, BTreeMap<metrics::Key, MetricInfo>>,
     /// Store units seperate because describe_xxx isn't scoped to labels
     /// Key is a copied String until at least metrics cl #381 is released in metrics
-    units: HashMap<String, metrics::Unit>,
+    units: HashMap<metrics::KeyName, metrics::Unit>,
     /// Properties to be written with metrics
     properties: BTreeMap<SharedString, Value>,
     /// Cold start span to drop after first invoke
@@ -302,9 +302,9 @@ impl Collector {
         let mut state = self.state.lock().unwrap();
 
         if let Some(unit) = unit {
-            state.units.insert(key.as_str().to_string(), unit);
+            state.units.insert(key.clone(), unit);
         } else {
-            state.units.remove(key.as_str());
+            state.units.remove(&key);
         }
     }
 

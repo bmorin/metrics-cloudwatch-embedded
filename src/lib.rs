@@ -5,8 +5,6 @@
 //!
 //! __The interface is not stable__
 //!
-//! __This is a Minimum Viable Product for feedback, experimentation and iteration__
-//!
 //! # Example
 //! ```
 //! let metrics = metrics_cloudwatch_embedded::Builder::new()
@@ -18,12 +16,12 @@
 //!
 //!  metrics
 //!      .set_property("RequestId", "ABC123")
-//!      .flush();
+//!      .flush(std::io::stdout());
 //! ```
 //!
 //! # Implementation Details
 //!
-//! Intended for use with the [lambda_runtime], however [Collector::flush_to(...)](collector::Collector::flush_to)
+//! Intended for use with the [lambda_runtime], however [Collector::flush(...)](collector::Collector::flush)
 //! could be used for anything that writes logs that end up in CloudWatch.
 //!
 //! * Counters are Guages are implented as [AtomicU64](std::sync::atomic::AtomicU64) via the

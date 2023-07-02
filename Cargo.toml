@@ -1,6 +1,6 @@
 [package]
 name = "metrics_cloudwatch_embedded"
-version = "0.3.1"
+version = "0.4.0"
 authors = ["brianmorin <brianmorin@drifter.games>"]
 edition = "2021"
 rust-version = "1.62.0"
@@ -28,8 +28,11 @@ serde_json = "1.0"
 tower = {version = "0.4", optional = true }
 tracing = "0.1"
 
-[profile.release]
-opt-level = "z"
-lto = true
-codegen-units = 1
-panic = "abort"
+[dev-dependencies]
+criterion = { version = "0.5", features = ["async_tokio"] }
+tokio = { version = "1", features = ["macros"] }
+tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt", "env-filter", "json"] }
+
+[[bench]]
+name = "bench"
+harness = false

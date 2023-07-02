@@ -22,6 +22,7 @@ const MAX_DIMENSIONS: usize = 30;
 pub struct Config {
     pub cloudwatch_namespace: SharedString,
     pub default_dimensions: Vec<(SharedString, SharedString)>,
+    pub timestamp: Option<u64>,
     #[cfg(feature = "lambda")]
     pub lambda_cold_start: Option<&'static str>,
     #[cfg(feature = "lambda")]
@@ -74,6 +75,9 @@ struct CollectorState {
     units: HashMap<String, metrics::Unit>,
     /// Properties to be written with metrics
     properties: BTreeMap<SharedString, Value>,
+    /// Cold start span to drop after first invoke
+    #[cfg(feature = "lambda")]
+    lambda_cold_start_span: Option<tracing::span::EnteredSpan>,
 }
 
 /// Embedded CloudWatch Metrics Collector + Emitter
@@ -91,7 +95,7 @@ struct CollectorState {
 ///
 ///  metrics
 ///      .set_property("RequestId", "ABC123")
-///      .flush();
+///      .flush(std::io::stdout());
 /// ```
 pub struct Collector {
     state: Mutex<CollectorState>,
@@ -99,12 +103,17 @@ pub struct Collector {
 }
 
 impl Collector {
-    pub fn new(config: Config) -> Self {
+    pub fn new(
+        config: Config,
+        #[cfg(feature = "lambda")] lambda_cold_start_span: Option<tracing::span::EnteredSpan>,
+    ) -> Self {
         Self {
             state: Mutex::new(CollectorState {
                 info_tree: BTreeMap::new(),
                 units: HashMap::new(),
                 properties: BTreeMap::new(),
+                #[cfg(feature = "lambda")]
+                lambda_cold_start_span: lambda_cold_start_span,
             }),
             config,
         }
@@ -131,39 +140,33 @@ impl Collector {
         self
     }
 
-    /// Flush the current counter values to stdout
-    pub fn flush(&self) -> std::io::Result<()> {
-        self.flush_to(std::io::stdout())
+    /// Compute the timestamp unless it was set via [Builder::with_timestamp]
+    fn timestamp(&self) -> u64 {
+        // Timestamp can be set to a
+        match self.config.timestamp {
+            Some(t) => t,
+            None => SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .expect("Time went backwards")
+                .as_millis() as u64,
+        }
     }
 
     /// Flush the current counter values to an implementation of std::io::Write
-    pub fn flush_to(&self, writer: impl std::io::Write) -> std::io::Result<()> {
-        let timestamp = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .expect("Time went backwards")
-            .as_millis() as u64;
-        self.flush_to_with_timestamp(timestamp, writer)
-    }
-
-    /// Flush the current counter values with the given timestamp to simplify unit testing
-    pub fn flush_to_with_timestamp(&self, timestamp: u64, mut writer: impl std::io::Write) -> std::io::Result<()> {
-        // CONSIDER: we may be able to save some allocations moving this into self.state
-        // or perhaps doing a swap for default dimensions and properties???
+    pub fn flush(&self, mut writer: impl std::io::Write) -> std::io::Result<()> {
         let mut emf = emf::EmbeddedMetrics {
             aws: emf::EmbeddedMetricsAws {
-                timestamp,
-                cloudwatch_metrics: Vec::new(),
+                timestamp: self.timestamp(),
+                cloudwatch_metrics: [emf::EmbeddedNamespace {
+                    namespace: &self.config.cloudwatch_namespace,
+                    dimensions: [Vec::with_capacity(MAX_DIMENSIONS)],
+                    metrics: Vec::new(),
+                }],
             },
             dimensions: BTreeMap::new(),
             properties: BTreeMap::new(),
             values: BTreeMap::new(),
         };
-
-        emf.aws.cloudwatch_metrics.push(emf::EmbeddedNamespace {
-            namespace: &self.config.cloudwatch_namespace,
-            dimensions: vec![Vec::with_capacity(MAX_DIMENSIONS)],
-            metrics: Vec::new(),
-        });
 
         for dimension in &self.config.default_dimensions {
             emf.aws.cloudwatch_metrics[0].dimensions[0].push(&dimension.0);
@@ -248,6 +251,52 @@ impl Collector {
         Ok(())
     }
 
+    /// Write a single metric to an implementation of [std::io::Write], avoids the overhead of
+    /// going through the metrics recorder
+    pub fn write_single(
+        &self,
+        name: impl Into<SharedString>,
+        unit: Option<metrics::Unit>,
+        value: impl Into<Value>,
+        mut writer: impl std::io::Write,
+    ) -> std::io::Result<()> {
+        let mut emf = emf::EmbeddedMetrics {
+            aws: emf::EmbeddedMetricsAws {
+                timestamp: self.timestamp(),
+                cloudwatch_metrics: [emf::EmbeddedNamespace {
+                    namespace: &self.config.cloudwatch_namespace,
+                    dimensions: [Vec::with_capacity(MAX_DIMENSIONS)],
+                    metrics: Vec::new(),
+                }],
+            },
+            dimensions: BTreeMap::new(),
+            properties: BTreeMap::new(),
+            values: BTreeMap::new(),
+        };
+
+        for dimension in &self.config.default_dimensions {
+            emf.aws.cloudwatch_metrics[0].dimensions[0].push(&dimension.0);
+            emf.dimensions.insert(&dimension.0, &dimension.1);
+        }
+
+        // Delay aquiring the mutex until we need it
+        let state = self.state.lock().unwrap();
+
+        for (key, value) in &state.properties {
+            emf.properties.insert(key, value.clone());
+        }
+
+        let name = name.into();
+        emf.aws.cloudwatch_metrics[0].metrics.push(emf::EmbeddedMetric {
+            name: &name,
+            unit: unit.map(|u| emf::unit_to_str(&u)),
+        });
+        emf.values.insert(&name, value.into());
+
+        serde_json::to_writer(&mut writer, &emf)?;
+        writeln!(writer)
+    }
+
     /// update the unit for a metric name, disregard what metric type it is
     fn update_unit(&self, key: metrics::KeyName, unit: Option<metrics::Unit>) {
         let mut state = self.state.lock().unwrap();
@@ -257,6 +306,12 @@ impl Collector {
         } else {
             state.units.remove(key.as_str());
         }
+    }
+
+    #[cfg(feature = "lambda")]
+    pub fn end_cold_start(&self) {
+        let mut state = self.state.lock().unwrap();
+        state.lambda_cold_start_span = None;
     }
 }
 

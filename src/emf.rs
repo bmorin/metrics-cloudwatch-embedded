@@ -24,16 +24,18 @@ pub struct EmbeddedMetrics<'a> {
 pub struct EmbeddedMetricsAws<'a> {
     #[serde(rename = "Timestamp")]
     pub timestamp: u64,
+    // This crate never uses more than one namespace in a metrics document
     #[serde(rename = "CloudWatchMetrics")]
-    pub cloudwatch_metrics: Vec<EmbeddedNamespace<'a>>,
+    pub cloudwatch_metrics: [EmbeddedNamespace<'a>; 1],
 }
 
 #[derive(Serialize)]
 pub struct EmbeddedNamespace<'a> {
     #[serde(rename = "Namespace")]
     pub namespace: &'a str,
+    // This create builds a single dimension set with all dimensions
     #[serde(rename = "Dimensions")]
-    pub dimensions: Vec<Vec<&'a str>>,
+    pub dimensions: [Vec<&'a str>; 1],
     #[serde(rename = "Metrics")]
     pub metrics: Vec<EmbeddedMetric<'a>>,
 }
@@ -82,7 +84,11 @@ mod tests {
         let mut metrics_test = EmbeddedMetrics {
             aws: EmbeddedMetricsAws {
                 timestamp: 0,
-                cloudwatch_metrics: Vec::new(),
+                cloudwatch_metrics: [EmbeddedNamespace {
+                    namespace: "GameServerMetrics",
+                    dimensions: [vec!["Address", "Port"]],
+                    metrics: Vec::new(),
+                }],
             },
             dimensions: BTreeMap::new(),
             properties: BTreeMap::new(),
@@ -90,12 +96,6 @@ mod tests {
         };
 
         metrics_test.aws.timestamp = 1687394207903;
-
-        metrics_test.aws.cloudwatch_metrics.push(EmbeddedNamespace {
-            namespace: "GameServerMetrics",
-            dimensions: vec![vec!["Address", "Port"]],
-            metrics: Vec::new(),
-        });
 
         metrics_test.dimensions.insert("Address", "10.172.207.225");
         metrics_test.dimensions.insert("Port", "7779");

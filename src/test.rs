@@ -11,6 +11,7 @@ mod tests {
             .cloudwatch_namespace("namespace")
             .with_dimension("Address", "10.172.207.225")
             .with_dimension("Port", port)
+            .with_timestamp(1687657545423)
             .init()
             .unwrap();
 
@@ -28,7 +29,7 @@ mod tests {
         metrics::histogram!("runtime", 5.0, "module" => "directory", "api" => "a_function");
 
         let mut output = Vec::new();
-        metrics.flush_to_with_timestamp(1687657545423, &mut output).unwrap();
+        metrics.flush(&mut output).unwrap();
         let output_str = std::str::from_utf8(&output).unwrap();
         assert_eq!(
             output_str,

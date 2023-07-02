@@ -1,6 +1,7 @@
 use lambda_runtime::{Error, LambdaEvent};
 use metrics_cloudwatch_embedded::lambda::handler::run;
 use serde::{Deserialize, Serialize};
+use tracing::{info, span, Level};
 
 #[derive(Deserialize)]
 struct Request {}
@@ -10,10 +11,12 @@ struct Response {
     req_id: String,
 }
 
-async fn function_handler(event: LambdaEvent<()>) -> Result<Response, Error> {
+async fn function_handler(event: LambdaEvent<Request>) -> Result<Response, Error> {
     let resp = Response {
         req_id: event.context.request_id.clone(),
     };
+
+    info!("Hello from function_handler");
 
     metrics::increment_counter!("requests", "Method" => "Default");
 
@@ -23,19 +26,23 @@ async fn function_handler(event: LambdaEvent<()>) -> Result<Response, Error> {
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     tracing_subscriber::fmt()
+        .json()
         .with_env_filter(tracing_subscriber::filter::EnvFilter::from_default_env())
         .with_target(false)
+        .with_current_span(false)
         .without_time()
-        .compact()
         .init();
 
     let metrics = metrics_cloudwatch_embedded::Builder::new()
         .cloudwatch_namespace("MetricsTest")
         .with_dimension("Function", std::env::var("AWS_LAMBDA_FUNCTION_NAME").unwrap())
+        .lambda_cold_start_span(span!(Level::INFO, "cold start").entered())
         .lambda_cold_start_metric("ColdStart")
         .with_lambda_request_id("RequestId")
         .init()
         .unwrap();
+
+    info!("Hello from main");
 
     run(metrics, function_handler).await
 }

@@ -14,6 +14,9 @@ use metrics::SharedString;
 pub struct Builder {
     cloudwatch_namespace: Option<SharedString>,
     default_dimensions: Vec<(SharedString, SharedString)>,
+    timestamp: Option<u64>,
+    #[cfg(feature = "lambda")]
+    lambda_cold_start_span: Option<tracing::span::EnteredSpan>,
     #[cfg(feature = "lambda")]
     lambda_cold_start: Option<&'static str>,
     #[cfg(feature = "lambda")]
@@ -28,6 +31,9 @@ impl Builder {
         Builder {
             cloudwatch_namespace: Default::default(),
             default_dimensions: Default::default(),
+            timestamp: None,
+            #[cfg(feature = "lambda")]
+            lambda_cold_start_span: None,
             #[cfg(feature = "lambda")]
             lambda_cold_start: None,
             #[cfg(feature = "lambda")]
@@ -52,6 +58,22 @@ impl Builder {
     /// * Metrics can have no more than 30 dimensions + labels
     pub fn with_dimension(mut self, name: impl Into<SharedString>, value: impl Into<SharedString>) -> Self {
         self.default_dimensions.push((name.into(), value.into()));
+        self
+    }
+
+    /// Sets the timestamp for flush to a constant value to simplify tests
+    pub fn with_timestamp(mut self, timestamp: u64) -> Self {
+        self.timestamp = Some(timestamp);
+        self
+    }
+
+    /// Passes a tracing span to drop after our cold start is complete
+    ///
+    /// *requires the `lambda` feature flag*
+    ///
+    #[cfg(feature = "lambda")]
+    pub fn lambda_cold_start_span(mut self, cold_start_span: tracing::span::EnteredSpan) -> Self {
+        self.lambda_cold_start_span = Some(cold_start_span);
         self
     }
 
@@ -87,24 +109,45 @@ impl Builder {
         self
     }
 
-    /// Private helper for consuming the builder into collector configuration
+    /// Private helper for consuming the builder into collector configuration (non-lambda)
+    #[cfg(not(feature = "lambda"))]
     fn build(self) -> Result<collector::Config, Error> {
         Ok(collector::Config {
             cloudwatch_namespace: self.cloudwatch_namespace.ok_or("cloudwatch_namespace missing")?,
             default_dimensions: self.default_dimensions,
-            #[cfg(feature = "lambda")]
-            lambda_cold_start: self.lambda_cold_start,
-            #[cfg(feature = "lambda")]
-            lambda_request_id: self.lambda_request_id,
-            #[cfg(feature = "lambda")]
-            lambda_xray_trace_id: self.lambda_xray_trace_id,
+            timestamp: self.timestamp,
         })
+    }
+
+    /// Private helper for consuming the builder into collector configuration (lambda)
+    #[cfg(feature = "lambda")]
+    fn build(self) -> Result<(collector::Config, Option<tracing::span::EnteredSpan>), Error> {
+        Ok((
+            collector::Config {
+                cloudwatch_namespace: self.cloudwatch_namespace.ok_or("cloudwatch_namespace missing")?,
+                default_dimensions: self.default_dimensions,
+                timestamp: self.timestamp,
+                lambda_cold_start: self.lambda_cold_start,
+                lambda_request_id: self.lambda_request_id,
+                lambda_xray_trace_id: self.lambda_xray_trace_id,
+            },
+            self.lambda_cold_start_span,
+        ))
     }
 
     /// Intialize the metrics collector including the call to [metrics::set_recorder]
     pub fn init(self) -> Result<&'static collector::Collector, Error> {
+        #[cfg(not(feature = "lambda"))]
         let config = self.build()?;
+        #[cfg(not(feature = "lambda"))]
         let collector = Box::leak(Box::new(collector::Collector::new(config)));
+
+        // Since we need to mutate the cold start span (if present), we can't just drop it in collector::Config
+        #[cfg(feature = "lambda")]
+        let (config, lambda_cold_start_span) = self.build()?;
+        #[cfg(feature = "lambda")]
+        let collector = Box::leak(Box::new(collector::Collector::new(config, lambda_cold_start_span)));
+
         metrics::set_recorder(collector)?;
         Ok(collector)
     }

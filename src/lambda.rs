@@ -5,12 +5,13 @@
 //! *this module requires the `lambda` feature flag*
 //!
 //! # Simple Example
-//! ```ignore
 //!
+//! ```no_run
 //! use lambda_runtime::{Error, LambdaEvent};
 //! // This replaces lambda_runtime::run and lambda_runtime::service_fn
 //! use metrics_cloudwatch_embedded::lambda::handler::run;
 //! use serde::{Deserialize, Serialize};
+//! use tracing::{info, span, Level};
 //!
 //! #[derive(Deserialize)]
 //! struct Request {}
@@ -18,27 +19,31 @@
 //! #[derive(Serialize)]
 //! struct Response {}
 //!
-//! async fn function_handler(event: LambdaEvent<()>) -> Result<Response, Error> {
+//! async fn function_handler(event: LambdaEvent<Request>) -> Result<Response, Error> {
 //!
 //!     // Do something important
 //!
+//!     info!("Hello from function_handler");
+//!
 //!     metrics::increment_counter!("requests", "Method" => "Default");
 //!
-//!     Ok(resp)
+//!     Ok(Response {})
 //! }
 //!
 //! #[tokio::main]
 //! async fn main() -> Result<(), Error> {
 //!     tracing_subscriber::fmt()
+//!         .json()
 //!         .with_env_filter(tracing_subscriber::filter::EnvFilter::from_default_env())
 //!         .with_target(false)
+//!         .with_current_span(false)
 //!         .without_time()
-//!         .compact()
 //!         .init();
 //!
 //!     let metrics = metrics_cloudwatch_embedded::Builder::new()
 //!         .cloudwatch_namespace("MetricsExample")
 //!         .with_dimension("Function", std::env::var("AWS_LAMBDA_FUNCTION_NAME").unwrap())
+//!         .lambda_cold_start_span(span!(Level::INFO, "cold start").entered())
 //!         .lambda_cold_start_metric("ColdStart")
 //!         .with_lambda_request_id("RequestId")
 //!         .init()
@@ -51,11 +56,16 @@
 //! # Output
 //!
 //! ```plaintext
-//! START RequestId: 4bd2d365-3792-46c8-9b6c-6132f9630fbb Version: $LATEST
-//! {"_aws":{"Timestamp":1687947426188,"CloudWatchMetrics":[{"Namespace":"MetricsTest","Dimensions":[["Function"]],"Metrics":[{"Name":"ColdStart","Unit":"Count"}]}]},"Function":"MetricsTest","RequestId":"4bd2d365-3792-46c8-9b6c-6132f9630fbb","ColdStart":1}
-//! {"_aws":{"Timestamp":1687947426188,"CloudWatchMetrics":[{"Namespace":"MetricsTest","Dimensions":[["Function","Method"]],"Metrics":[{"Name":"requests"}]}]},"Function":"MetricsTest","Method":"Default","RequestId":"4bd2d365-3792-46c8-9b6c-6132f9630fbb","requests":1}
-//! END RequestId: 4bd2d365-3792-46c8-9b6c-6132f9630fbb`
+//! INIT_START Runtime Version: provided:al2.v19	Runtime Version ARN: arn:aws:lambda:us-west-2::runtime:d1007133cb0d993d9a42f9fc10442cede0efec65d732c7943b51ebb979b8f3f8
+//! {"level":"INFO","fields":{"message":"Hello from main"},"spans":[{"name":"cold start"}]}
+//! START RequestId: fce53486-160d-41e8-b8c3-8ef0fd0f4051 Version: $LATEST
+//! {"_aws":{"Timestamp":1688294472338,"CloudWatchMetrics":[{"Namespace":"MetricsTest","Dimensions":[["Function"]],"Metrics":[{"Name":"ColdStart","Unit":"Count"}]}]},"Function":"MetricsTest","RequestId":"fce53486-160d-41e8-b8c3-8ef0fd0f4051","ColdStart":1}
+//! {"level":"INFO","fields":{"message":"Hello from function_handler"},"spans":[{"name":"cold start"},{"requestId":"fce53486-160d-41e8-b8c3-8ef0fd0f4051","xrayTraceId":"Root=1-64a15448-4aa914a00d66aa066325d7e3;Parent=60a7d0c22fb2f001;Sampled=0;Lineage=16f3a795:0","name":"Lambda runtime invoke"}]}
+//! {"_aws":{"Timestamp":1688294472338,"CloudWatchMetrics":[{"Namespace":"MetricsTest","Dimensions":[["Function","Method"]],"Metrics":[{"Name":"requests"}]}]},"Function":"MetricsTest","Method":"Default","RequestId":"fce53486-160d-41e8-b8c3-8ef0fd0f4051","requests":1}
+//! END RequestId: fce53486-160d-41e8-b8c3-8ef0fd0f4051
+//! REPORT RequestId: fce53486-160d-41e8-b8c3-8ef0fd0f4051 Duration: 1.22 ms Billed Duration: 11 ms Memory Size: 128 MB Max Memory Used: 13 MB Init Duration: 8.99 ms
 //! ```
+//!
 //! # Advanced Usage
 //!
 //! If you're building a more sophisticated [tower] stack, use [MetricsService] instead
@@ -110,12 +120,11 @@ where
         }
 
         if let Some(counter_name) = self.metrics.config.lambda_cold_start {
-            static COLD_START: std::sync::Once = std::sync::Once::new();
-            COLD_START.call_once(|| {
-                // CONSIDER: We could just write the metrics document out instead
-                metrics::describe_counter!(counter_name, metrics::Unit::Count, "");
-                metrics::increment_counter!(counter_name);
-                self.metrics.flush().unwrap();
+            static COLD_START_BEGIN: std::sync::Once = std::sync::Once::new();
+            COLD_START_BEGIN.call_once(|| {
+                self.metrics
+                    .write_single(counter_name, Some(metrics::Unit::Count), 1, std::io::stdout())
+                    .expect("failed to flush cold start metric");
             });
         }
 
@@ -150,7 +159,12 @@ where
             let result = result.map_err(Into::into);
 
             // Flush our metrics after the inner service is finished
-            this.metrics.flush().unwrap();
+            this.metrics.flush(std::io::stdout()).expect("failed to flush metrics");
+
+            static COLD_START_END: std::sync::Once = std::sync::Once::new();
+            COLD_START_END.call_once(|| {
+                this.metrics.end_cold_start();
+            });
 
             return Poll::Ready(result);
         }

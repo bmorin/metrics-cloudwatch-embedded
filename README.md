@@ -31,14 +31,18 @@ AWS Lambda Example
 ------------------
 The [Lambda Runtime](https://crates.io/crates/lambda-runtime) intergration feature handles flushing metrics 
 after each invoke via either `run()` alternatives or `MetricService` which inplements the 
-[`tower::Service`](https://crates.io/crates/tower) trait.  It also provides optional helpers for:
+[`tower::Service`](https://crates.io/crates/tower) trait.  
+
+It also provides optional helpers for:
 * emiting a metric on cold starts
 * wrapping cold starts in a [`tracing`](https://crates.io/crates/tracing) span
 * decorating metric documents with request id and/or x-ray trace id
 
 In your Cargo.toml add:
 ```toml
+metrics = "0.21"
 metrics_cloudwatch_embedded = {  version = "0.4.0", features = ["lambda"] }
+tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt", "env-filter", "json"] }
 ```
 
 ```rust

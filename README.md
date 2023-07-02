@@ -45,6 +45,7 @@ metrics_cloudwatch_embedded = {  version = "0.4.0", features = ["lambda"] }
 tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt", "env-filter", "json"] }
 ```
 
+main.rs:
 ```rust
 use lambda_runtime::{Error, LambdaEvent};
 use metrics_cloudwatch_embedded::lambda::handler::run;
@@ -95,7 +96,7 @@ async fn main() -> Result<(), Error> {
     run(metrics, function_handler).await
 }
 ```
-
+CloudWatch log after a single invoke (cold start):
 ```plaintext
 INIT_START Runtime Version: provided:al2.v19	Runtime Version ARN: arn:aws:lambda:us-west-2::runtime:d1007133cb0d993d9a42f9fc10442cede0efec65d732c7943b51ebb979b8f3f8
 {"level":"INFO","fields":{"message":"Hello from main"},"spans":[{"name":"cold start"}]}

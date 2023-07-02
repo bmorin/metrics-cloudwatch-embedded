@@ -1,6 +1,7 @@
 use lambda_http::{Body, Error, Request, Response};
 use metrics_cloudwatch_embedded::lambda::handler::run_http;
 use serde::Deserialize;
+use tracing::{info, span, Level};
 
 #[derive(Deserialize)]
 struct Payload {}

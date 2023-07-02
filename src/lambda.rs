@@ -56,7 +56,7 @@
 //! # Output
 //!
 //! ```plaintext
-//! INIT_START Runtime Version: provided:al2.v19	Runtime Version ARN: arn:aws:lambda:us-west-2::runtime:d1007133cb0d993d9a42f9fc10442cede0efec65d732c7943b51ebb979b8f3f8
+//! INIT_START Runtime Version: provided:al2.v19    Runtime Version ARN: arn:aws:lambda:us-west-2::runtime:d1007133cb0d993d9a42f9fc10442cede0efec65d732c7943b51ebb979b8f3f8
 //! {"level":"INFO","fields":{"message":"Hello from main"},"spans":[{"name":"cold start"}]}
 //! START RequestId: fce53486-160d-41e8-b8c3-8ef0fd0f4051 Version: $LATEST
 //! {"_aws":{"Timestamp":1688294472338,"CloudWatchMetrics":[{"Namespace":"MetricsTest","Dimensions":[["Function"]],"Metrics":[{"Name":"ColdStart","Unit":"Count"}]}]},"Function":"MetricsTest","RequestId":"fce53486-160d-41e8-b8c3-8ef0fd0f4051","ColdStart":1}

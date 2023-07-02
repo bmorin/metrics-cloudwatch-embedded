@@ -113,7 +113,7 @@ impl Collector {
                 units: HashMap::new(),
                 properties: BTreeMap::new(),
                 #[cfg(feature = "lambda")]
-                lambda_cold_start_span: lambda_cold_start_span,
+                lambda_cold_start_span,
             }),
             config,
         }
@@ -302,7 +302,7 @@ impl Collector {
         let mut state = self.state.lock().unwrap();
 
         if let Some(unit) = unit {
-            state.units.insert(key.clone(), unit);
+            state.units.insert(key, unit);
         } else {
             state.units.remove(&key);
         }

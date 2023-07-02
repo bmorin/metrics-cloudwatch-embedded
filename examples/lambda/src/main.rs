@@ -1,7 +1,7 @@
 use lambda_runtime::{Error, LambdaEvent};
 use metrics_cloudwatch_embedded::lambda::handler::run;
 use serde::{Deserialize, Serialize};
-use tracing::{info, span, Level};
+use tracing::{info, info_span};
 
 #[derive(Deserialize)]
 struct Request {}
@@ -36,7 +36,7 @@ async fn main() -> Result<(), Error> {
     let metrics = metrics_cloudwatch_embedded::Builder::new()
         .cloudwatch_namespace("MetricsTest")
         .with_dimension("Function", std::env::var("AWS_LAMBDA_FUNCTION_NAME").unwrap())
-        .lambda_cold_start_span(span!(Level::INFO, "cold start").entered())
+        .lambda_cold_start_span(info_span!("cold start").entered())
         .lambda_cold_start_metric("ColdStart")
         .with_lambda_request_id("RequestId")
         .init()

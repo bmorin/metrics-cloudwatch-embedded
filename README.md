@@ -123,7 +123,7 @@ more than 30 dimensions/labels will fail with an error via the `tracing` crate
 Supported Rust Versions (MSRV)
 ------------------------------
 
-The AWS Lambda Rust Runtime requires a minimum of Rust 1.62, and is not guaranteed to build on compiler versions earlier than that.
+The crate requires a minimum of Rust 1.62, and is not guaranteed to build on compiler versions earlier than that.
 
 This may change when async traits are released to stable depending on the ripple effects to the ecosystem.
 

@@ -40,7 +40,7 @@ It also provides optional helpers for:
 
 In your Cargo.toml add:
 ```toml
-metrics = "0.21"
+metrics = "0.21.1"
 metrics_cloudwatch_embedded = {  version = "0.4.0", features = ["lambda"] }
 tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt", "env-filter", "json"] }
 ```

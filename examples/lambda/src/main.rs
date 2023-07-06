@@ -35,7 +35,7 @@ async fn main() -> Result<(), Error> {
 
     let metrics = metrics_cloudwatch_embedded::Builder::new()
         .cloudwatch_namespace("MetricsTest")
-        .with_dimension("Function", std::env::var("AWS_LAMBDA_FUNCTION_NAME").unwrap())
+        .with_dimension("function", std::env::var("AWS_LAMBDA_FUNCTION_NAME").unwrap())
         .lambda_cold_start_span(info_span!("cold start").entered())
         .lambda_cold_start_metric("ColdStart")
         .with_lambda_request_id("RequestId")

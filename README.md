@@ -40,7 +40,7 @@ It also provides optional helpers for:
 
 In your Cargo.toml add:
 ```toml
-metrics = "0.21"
+metrics = "0.21.1"
 metrics_cloudwatch_embedded = {  version = "0.4.0", features = ["lambda"] }
 tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt", "env-filter", "json"] }
 ```
@@ -50,7 +50,7 @@ main.rs:
 use lambda_runtime::{Error, LambdaEvent};
 use metrics_cloudwatch_embedded::lambda::handler::run;
 use serde::{Deserialize, Serialize};
-use tracing::{info, span, Level};
+use tracing::{info, info_span};
 
 #[derive(Deserialize)]
 struct Request {}
@@ -84,8 +84,8 @@ async fn main() -> Result<(), Error> {
 
     let metrics = metrics_cloudwatch_embedded::Builder::new()
         .cloudwatch_namespace("MetricsTest")
-        .with_dimension("Function", std::env::var("AWS_LAMBDA_FUNCTION_NAME").unwrap())
-        .lambda_cold_start_span(span!(Level::INFO, "cold start").entered())
+        .with_dimension("function", std::env::var("AWS_LAMBDA_FUNCTION_NAME").unwrap())
+        .lambda_cold_start_span(info_span!("cold start").entered())
         .lambda_cold_start_metric("ColdStart")
         .with_lambda_request_id("RequestId")
         .init()
@@ -123,7 +123,7 @@ more than 30 dimensions/labels will fail with an error via the `tracing` crate
 Supported Rust Versions (MSRV)
 ------------------------------
 
-The AWS Lambda Rust Runtime requires a minimum of Rust 1.62, and is not guaranteed to build on compiler versions earlier than that.
+This crate requires a minimum of Rust 1.62, and is not guaranteed to build on compiler versions earlier than that.
 
 This may change when async traits are released to stable depending on the ripple effects to the ecosystem.
 
@@ -138,6 +138,12 @@ Contribution
 Unless you explicitly state otherwise, any contribution intentionally submitted
 for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
 licensed as above, without any additional terms or conditions.
+
+Feedback
+--------
+
+Your feedback is important, if you evalute or use this crate please leave a post in our 
+[Github Feedback Discussion](https://github.com/BMorinDrifter/metrics-cloudwatch-embedded/discussions/categories/feeback)
 
 Thanks
 ------

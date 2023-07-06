@@ -1,3 +1,7 @@
+## v0.4.1 (2022-07-06)
+* updated examples to use info_span! and match casing of lambda power tools
+* fixed metrics dependency to 0.21.1
+
 ## v0.4.0 (2022-07-02)
 
 * added Builder::lambda_cold_start_span() for tracking cold starts in traces
@@ -5,7 +9,7 @@
 * Builder::lambda_cold_start_metric() now calls into Collector::flush_single() under the hood
 * removed Collector::flush_to, Collector::flush inputs std::io::Write 
 * replaced Collector::flush_to_with_timestamp with Builder::with_timestamp
-* reduced memory allocations Collector::flush() by replacing a couple single element vectors with arrays
+* reduced memory allocations in Collector::flush() by replacing a couple single element vectors with arrays
 * eliminated a string copy on metrics::describe_*
 
 ## v0.3.1 (2022-06-29)

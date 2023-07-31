@@ -13,7 +13,7 @@ struct Response {
 
 async fn function_handler(event: LambdaEvent<Request>) -> Result<Response, Error> {
     let resp = Response {
-        req_id: event.context.request_id.clone(),
+        req_id: event.context.request_id,
     };
 
     info!("Hello from function_handler");

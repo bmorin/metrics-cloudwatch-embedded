@@ -3,8 +3,6 @@
 //!
 //! Counters, Gauges and Histograms are supported.  
 //!
-//! __The interface is not stable__
-//!
 //! # Example
 //! ```
 //! let metrics = metrics_cloudwatch_embedded::Builder::new()

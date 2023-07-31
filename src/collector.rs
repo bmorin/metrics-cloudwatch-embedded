@@ -122,7 +122,6 @@ impl Collector {
     /// Set a property to emit with the metrics
     /// * Properites persist accross flush calls
     /// * Setting a property with same name multiple times will overwrite the previous value
-    /// * value types other than serde_json::Value::Number and serde_json::Value::String may not work
     pub fn set_property(&self, name: impl Into<SharedString>, value: impl Into<Value>) -> &Self {
         {
             let mut state = self.state.lock().unwrap();

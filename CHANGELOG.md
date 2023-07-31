@@ -1,3 +1,7 @@
+## v0.4.2 (2022-07-31)
+* removed stability disclaimer
+* tested metric properties and confirmed that pretty much any json value will get your metric data to ingest
+
 ## v0.4.1 (2022-07-06)
 * updated examples to use info_span! and match casing of lambda power tools
 * fixed metrics dependency to 0.21.1

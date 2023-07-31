@@ -3,8 +3,6 @@ metrics_cloudwatch_embedded
 [![Crates.io version shield](https://img.shields.io/crates/v/metrics_cloudwatch_embedded.svg)](https://crates.io/crates/metrics_cloudwatch_embedded)
 [![Crates.io license shield](https://img.shields.io/crates/l/metrics_cloudwatch_embedded.svg)](https://crates.io/crates/metrics_cloudwatch_embedded)
 
-__The interface is not stable__
-
 Purpose
 -------
 
@@ -41,7 +39,7 @@ It also provides optional helpers for:
 In your Cargo.toml add:
 ```toml
 metrics = "0.21.1"
-metrics_cloudwatch_embedded = {  version = "0.4.0", features = ["lambda"] }
+metrics_cloudwatch_embedded = {  version = "0.4.2", features = ["lambda"] }
 tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt", "env-filter", "json"] }
 ```
 

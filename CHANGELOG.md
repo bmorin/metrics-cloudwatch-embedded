@@ -1,3 +1,6 @@
+## v0.4.3 (2022-01-13)
+* updated lambda runtime to 0.9
+
 ## v0.4.2 (2022-07-31)
 * removed stability disclaimer
 * tested metric properties and confirmed that pretty much any json value will get your metric data to ingest

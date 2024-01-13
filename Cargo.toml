@@ -1,9 +1,9 @@
 [package]
 name = "metrics_cloudwatch_embedded"
-version = "0.4.2"
-authors = ["brianmorin <brianmorin@drifter.games>"]
+version = "0.4.3"
+authors = ["brianmorin <brianrossmorin@gmail.com>"]
 edition = "2021"
-rust-version = "1.62.0"
+rust-version = "1.64.0"
 
 description = "CloudWatch embedded metrics format emitter for the metrics crate"
 license = "Apache-2.0"

@@ -315,7 +315,13 @@ impl Collector {
 }
 
 pub struct Recorder {
-    pub(crate) collector: &'static Collector,
+    collector: &'static Collector,
+}
+
+impl From<&'static Collector> for Recorder {
+    fn from(collector: &'static Collector) -> Self {
+        Self { collector }
+    }
 }
 
 impl metrics::Recorder for Recorder {

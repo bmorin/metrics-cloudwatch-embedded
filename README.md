@@ -18,7 +18,7 @@ let metrics = metrics_cloudwatch_embedded::Builder::new()
     .init()
     .unwrap();
 
-metrics::increment_counter!("requests", "Method" => "Default");
+metrics::counter!("requests", "Method" => "Default").increment(1.0);
 
 metrics
     .set_property("RequestId", "ABC123")
@@ -38,8 +38,8 @@ It also provides optional helpers for:
 
 In your Cargo.toml add:
 ```toml
-metrics = "0.21.1"
-metrics_cloudwatch_embedded = {  version = "0.4.2", features = ["lambda"] }
+metrics = "0.22.3"
+metrics_cloudwatch_embedded = {  version = "0.5.0", features = ["lambda"] }
 tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt", "env-filter", "json"] }
 ```
 
@@ -65,7 +65,7 @@ async fn function_handler(event: LambdaEvent<Request>) -> Result<Response, Error
 
     info!("Hello from function_handler");
 
-    metrics::increment_counter!("requests", "Method" => "Default");
+    metrics::counter!("requests", "Method" => "Default").increment(1.0);
 
     Ok(resp)
 }

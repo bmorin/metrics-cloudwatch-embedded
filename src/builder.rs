@@ -148,7 +148,7 @@ impl Builder {
         #[cfg(feature = "lambda")]
         let collector = Box::leak(Box::new(collector::Collector::new(config, lambda_cold_start_span)));
 
-        metrics::set_recorder(collector)?;
+        metrics::set_global_recorder(collector::Recorder { collector }).map_err(|e| e.to_string())?;
         Ok(collector)
     }
 }

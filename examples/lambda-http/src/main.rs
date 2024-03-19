@@ -9,7 +9,7 @@ struct Payload {}
 async fn function_handler(_event: Request) -> Result<Response<Body>, Error> {
     info!("Hello from function_handler");
 
-    metrics::increment_counter!("requests", "Method" => "Default");
+    metrics::counter!("requests", "Method" => "Default").increment(1);
 
     let resp = Response::builder().status(200).body("".into()).map_err(Box::new)?;
     Ok(resp)

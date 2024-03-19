@@ -7,10 +7,10 @@ fn criterion_benchmark(c: &mut Criterion) {
         .init()
         .unwrap();
 
-    metrics::gauge!("four", 1.0, "Method" => "Default");
-    metrics::gauge!("score", 1.0, "Method" => "Default");
-    metrics::gauge!("andseven", 1.0, "Method" => "Another");
-    metrics::gauge!("years", 1.0, "Method" => "YetAnother");
+    metrics::gauge!("four", "Method" => "Default").set(1.0);
+    metrics::gauge!("score", "Method" => "Default").set(1.0);
+    metrics::gauge!("andseven", "Method" => "Another").set(1.0);
+    metrics::gauge!("years", "Method" => "YetAnother").set(1.0);
 
     c.bench_function("flush", |b| {
         b.iter(|| metrics.set_property("RequestId", "ABC123").flush(std::io::sink()))

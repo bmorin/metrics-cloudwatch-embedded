@@ -10,7 +10,7 @@
 //!      .init()
 //!      .unwrap();
 //!
-//!  metrics::increment_counter!("requests", "Method" => "Default");
+//!  metrics::counter!("requests", "Method" => "Default").increment(1);
 //!
 //!  metrics
 //!      .set_property("RequestId", "ABC123")

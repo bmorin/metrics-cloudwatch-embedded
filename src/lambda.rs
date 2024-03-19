@@ -25,7 +25,7 @@
 //!
 //!     info!("Hello from function_handler");
 //!
-//!     metrics::increment_counter!("requests", "Method" => "Default");
+//!     metrics::counter!("requests", "Method" => "Default").increment(1);
 //!
 //!     Ok(Response {})
 //! }

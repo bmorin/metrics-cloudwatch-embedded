@@ -135,20 +135,21 @@ impl Builder {
         ))
     }
 
-    /// Intialize the metrics collector including the call to [metrics::set_recorder]
+    /// Intialize the metrics collector including the call to [metrics::set_global_recorder]
     pub fn init(self) -> Result<&'static collector::Collector, Error> {
         #[cfg(not(feature = "lambda"))]
         let config = self.build()?;
         #[cfg(not(feature = "lambda"))]
-        let collector = Box::leak(Box::new(collector::Collector::new(config)));
+        let collector: &'static collector::Collector = Box::leak(Box::new(collector::Collector::new(config)));
 
         // Since we need to mutate the cold start span (if present), we can't just drop it in collector::Config
         #[cfg(feature = "lambda")]
         let (config, lambda_cold_start_span) = self.build()?;
         #[cfg(feature = "lambda")]
-        let collector = Box::leak(Box::new(collector::Collector::new(config, lambda_cold_start_span)));
+        let collector: &'static collector::Collector =
+            Box::leak(Box::new(collector::Collector::new(config, lambda_cold_start_span)));
 
-        metrics::set_recorder(collector)?;
+        metrics::set_global_recorder::<collector::Recorder>(collector.into()).map_err(|e| e.to_string())?;
         Ok(collector)
     }
 }

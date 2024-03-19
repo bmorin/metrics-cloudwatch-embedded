@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-lambda_runtime = "0.9"
-metrics = "0.21.1"
+lambda_runtime = "0.10"
+metrics = "0.22.3"
 metrics_cloudwatch_embedded = { path = "../..", features = ["lambda"] }
 serde = {version = "1.0", features = ["derive"] }
 tokio = { version = "1", features = ["macros"] }

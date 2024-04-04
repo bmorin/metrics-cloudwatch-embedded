@@ -80,6 +80,10 @@ use std::pin::Pin;
 use std::task::{Context, Poll};
 use tower::Layer;
 
+/// [tower::Layer] for automatically [flushing](super::Collector::flush()) after each request and enabling
+/// `lambda` features in [Builder](super::Builder)
+///
+/// For composing your own [tower] stacks to input into the Rust Lambda Runtime
 pub struct MetricsLayer {
     pub(crate) collector: &'static Collector,
 }
@@ -195,7 +199,8 @@ where
     }
 }
 
-/// Helpers for starting the Lambda Rust runtime with a [tower::Service] wrapped by a [MetricsService]
+/// Helpers for starting the Lambda Rust runtime with a [tower::Service] with a
+/// [TracingLayer] and a [MetricsLayer]
 ///
 /// Reduces the amount of ceremony needed in `main()` for simple use cases
 ///
@@ -235,7 +240,7 @@ pub mod service {
     }
 
     /// Start the Lambda Rust runtime with a given [tower::Service<lambda_http::Request>]
-    /// which is then wrapped by new [MetricsService] with a given [Collector]
+    /// which is then layered with [TracingLayer] and [MetricsLayer] with a given [Collector]
     pub async fn run_http<'a, R, S, E>(metrics: &'static Collector, inner: S) -> Result<(), lambda_runtime::Error>
     where
         S: tower::Service<lambda_http::Request, Response = R, Error = E>,
@@ -248,7 +253,8 @@ pub mod service {
     }
 }
 
-/// Helpers for starting the Lambda Rust runtime with a handler function wrapped by the [MetricsService]
+/// Helpers for starting the Lambda Rust runtime with a handler function and
+/// a [lambda_runtime::layers::TracingLayer] and a [MetricsLayer]
 ///
 /// Reduces the amount of ceremony needed in `main()` for simple use cases
 ///
@@ -259,7 +265,7 @@ pub mod handler {
     use super::*;
 
     /// Start the Lambda Rust runtime with a given [LambdaEvent] handler function
-    /// which is then wrapped by a new [MetricsService] with a given [Collector]
+    /// which is then layered with [lambda_runtime::layers::TracingLayer] and [MetricsLayer] with a given [Collector]
     pub async fn run<T, F, Request, Response>(
         metrics: &'static Collector,
         handler: T,
@@ -274,7 +280,7 @@ pub mod handler {
     }
 
     /// Start the Lambda Rust runtime with a given [lambda_http::Request] handler function
-    /// which is then wrapped by a new [MetricsService] with a given [Collector]
+    /// which is then layered with [lambda_runtime::layers::TracingLayer] and [MetricsLayer] with a given [Collector]
     pub async fn run_http<'a, T, F, Response>(
         metrics: &'static Collector,
         handler: T,

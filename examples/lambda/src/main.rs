@@ -1,5 +1,5 @@
-use lambda_runtime::{service_fn, Error, LambdaEvent, Runtime};
-use metrics_cloudwatch_embedded::lambda::MetricsLayer;
+use lambda_runtime::{Error, LambdaEvent};
+use metrics_cloudwatch_embedded::lambda::handler::run;
 use serde::{Deserialize, Serialize};
 use tracing::{info, info_span};
 
@@ -44,10 +44,5 @@ async fn main() -> Result<(), Error> {
 
     info!("Hello from main");
 
-    Runtime::new(service_fn(function_handler))
-        .layer(MetricsLayer::new(metrics))
-        .run()
-        .await?;
-
-    Ok(())
+    run(metrics, function_handler).await
 }

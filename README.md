@@ -18,7 +18,7 @@ let metrics = metrics_cloudwatch_embedded::Builder::new()
     .init()
     .unwrap();
 
-metrics::counter!("requests", "Method" => "Default").increment(1.0);
+metrics::counter!("requests", "Method" => "Default").increment(1);
 
 metrics
     .set_property("RequestId", "ABC123")
@@ -65,7 +65,7 @@ async fn function_handler(event: LambdaEvent<Request>) -> Result<Response, Error
 
     info!("Hello from function_handler");
 
-    metrics::counter!("requests", "Method" => "Default").increment(1.0);
+    metrics::counter!("requests", "Method" => "Default").increment(1);
 
     Ok(resp)
 }

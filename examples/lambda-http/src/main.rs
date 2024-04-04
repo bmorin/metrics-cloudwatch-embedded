@@ -1,5 +1,6 @@
-use lambda_http::{Body, Error, Request, Response};
-use metrics_cloudwatch_embedded::lambda::handler::run_http;
+use lambda_http::{service_fn, Body, Error, Request, Response};
+use lambda_runtime::Runtime;
+use metrics_cloudwatch_embedded::lambda::MetricsLayer;
 use serde::Deserialize;
 use tracing::{info, info_span};
 
@@ -36,5 +37,10 @@ async fn main() -> Result<(), Error> {
 
     info!("Hello from main");
 
-    run_http(metrics, function_handler).await
+    Runtime::new(lambda_http::Adapter::from(service_fn(function_handler)))
+        .layer(MetricsLayer::new(metrics))
+        .run()
+        .await?;
+
+    Ok(())
 }

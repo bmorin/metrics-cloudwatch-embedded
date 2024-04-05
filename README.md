@@ -18,7 +18,7 @@ let metrics = metrics_cloudwatch_embedded::Builder::new()
     .init()
     .unwrap();
 
-metrics::increment_counter!("requests", "Method" => "Default");
+metrics::counter!("requests", "Method" => "Default").increment(1);
 
 metrics
     .set_property("RequestId", "ABC123")
@@ -38,8 +38,8 @@ It also provides optional helpers for:
 
 In your Cargo.toml add:
 ```toml
-metrics = "0.21.1"
-metrics_cloudwatch_embedded = {  version = "0.4.2", features = ["lambda"] }
+metrics = "0.22.3"
+metrics_cloudwatch_embedded = {  version = "0.5.0", features = ["lambda"] }
 tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt", "env-filter", "json"] }
 ```
 
@@ -65,7 +65,7 @@ async fn function_handler(event: LambdaEvent<Request>) -> Result<Response, Error
 
     info!("Hello from function_handler");
 
-    metrics::increment_counter!("requests", "Method" => "Default");
+    metrics::counter!("requests", "Method" => "Default").increment(1);
 
     Ok(resp)
 }
@@ -121,7 +121,7 @@ more than 30 dimensions/labels will fail with an error via the `tracing` crate
 Supported Rust Versions (MSRV)
 ------------------------------
 
-This crate requires a minimum of Rust 1.64, and is not guaranteed to build on compiler versions earlier than that.
+This crate requires a minimum of Rust 1.65, and is not guaranteed to build on compiler versions earlier than that.
 
 This may change when async traits are released to stable depending on the ripple effects to the ecosystem.
 

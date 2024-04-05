@@ -1,9 +1,9 @@
 [package]
 name = "metrics_cloudwatch_embedded"
-version = "0.4.3"
+version = "0.5.0"
 authors = ["brianmorin <brianrossmorin@gmail.com>"]
 edition = "2021"
-rust-version = "1.64.0"
+rust-version = "1.65.0"
 
 description = "CloudWatch embedded metrics format emitter for the metrics crate"
 license = "Apache-2.0"
@@ -19,14 +19,16 @@ lambda = ["dep:http", "dep:lambda_http", "dep:lambda_runtime", "dep:pin-project"
 
 [dependencies]
 http = { version = "1.0", optional = true }
-lambda_http = { version = "0.9", optional = true }
-lambda_runtime = { version = "0.9", optional = true }
-metrics = "0.21.1"
+lambda_http = { version = "0.11", optional = true }
+lambda_runtime = { version = "0.11", optional = true }
+metrics = "0.22.3"
 pin-project = { version = "1", optional = true }
 serde = {version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tower = {version = "0.4", optional = true }
 tracing = "0.1"
+futures = "0.3"
+bytes = "1"
 
 [dev-dependencies]
 criterion = { version = "0.5", features = ["async_tokio"] }

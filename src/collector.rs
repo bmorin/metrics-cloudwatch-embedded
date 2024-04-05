@@ -91,7 +91,7 @@ struct CollectorState {
 ///      .init()
 ///      .unwrap();
 ///
-///  metrics::increment_counter!("requests", "Method" => "Default");
+///  metrics::counter!("requests", "Method" => "Default").increment(1);
 ///
 ///  metrics
 ///      .set_property("RequestId", "ABC123")
@@ -314,30 +314,40 @@ impl Collector {
     }
 }
 
-impl metrics::Recorder for Collector {
+pub struct Recorder {
+    collector: &'static Collector,
+}
+
+impl From<&'static Collector> for Recorder {
+    fn from(collector: &'static Collector) -> Self {
+        Self { collector }
+    }
+}
+
+impl metrics::Recorder for Recorder {
     fn describe_counter(&self, key: metrics::KeyName, unit: Option<metrics::Unit>, _description: SharedString) {
-        self.update_unit(key, unit)
+        self.collector.update_unit(key, unit)
     }
 
     fn describe_gauge(&self, key: metrics::KeyName, unit: Option<metrics::Unit>, _description: SharedString) {
-        self.update_unit(key, unit)
+        self.collector.update_unit(key, unit)
     }
 
     fn describe_histogram(&self, key: metrics::KeyName, unit: Option<metrics::Unit>, _description: SharedString) {
-        self.update_unit(key, unit)
+        self.collector.update_unit(key, unit)
     }
 
     #[allow(clippy::mutable_key_type)] // metrics::Key has interior mutability
-    fn register_counter(&self, key: &metrics::Key) -> metrics::Counter {
+    fn register_counter(&self, key: &metrics::Key, _metadata: &metrics::Metadata) -> metrics::Counter {
         // Build our own copy of the labels before aquiring the mutex
         let labels: Vec<metrics::Label> = key.labels().cloned().collect();
 
-        if self.config.default_dimensions.len() + labels.len() > MAX_DIMENSIONS {
+        if self.collector.config.default_dimensions.len() + labels.len() > MAX_DIMENSIONS {
             error!("Unable to register counter {key} as it has more than {MAX_DIMENSIONS} dimensions/labels");
             return metrics::Counter::noop();
         }
 
-        let mut state = self.state.lock().unwrap();
+        let mut state = self.collector.state.lock().unwrap();
 
         // Does this metric already exist?
         if let Some(label_info) = state.info_tree.get_mut(&labels) {
@@ -374,18 +384,18 @@ impl metrics::Recorder for Collector {
     }
 
     #[allow(clippy::mutable_key_type)] // metrics::Key has interior mutability
-    fn register_gauge(&self, key: &metrics::Key) -> metrics::Gauge {
+    fn register_gauge(&self, key: &metrics::Key, _metadata: &metrics::Metadata) -> metrics::Gauge {
         // Build our own copy of the labels before aquiring the mutex
         let labels: Vec<metrics::Label> = key.labels().cloned().collect();
 
-        if self.config.default_dimensions.len() + labels.len() > MAX_DIMENSIONS {
+        if self.collector.config.default_dimensions.len() + labels.len() > MAX_DIMENSIONS {
             error!(
                 "Unable to register counter {key} as a gauge as it has more than {MAX_DIMENSIONS} dimensions/labels"
             );
             return metrics::Gauge::noop();
         }
 
-        let mut state = self.state.lock().unwrap();
+        let mut state = self.collector.state.lock().unwrap();
 
         // Does this metric already exist?
         if let Some(label_info) = state.info_tree.get_mut(&labels) {
@@ -422,16 +432,16 @@ impl metrics::Recorder for Collector {
     }
 
     #[allow(clippy::mutable_key_type)] // metrics::Key has interior mutability
-    fn register_histogram(&self, key: &metrics::Key) -> metrics::Histogram {
+    fn register_histogram(&self, key: &metrics::Key, _metadata: &metrics::Metadata) -> metrics::Histogram {
         // Build our own copy of the labels before aquiring the mutex
         let labels: Vec<metrics::Label> = key.labels().cloned().collect();
 
-        if self.config.default_dimensions.len() + labels.len() > MAX_DIMENSIONS {
+        if self.collector.config.default_dimensions.len() + labels.len() > MAX_DIMENSIONS {
             error!("Unable to register histogram {key} as it has more than {MAX_DIMENSIONS} dimensions/labels");
             return metrics::Histogram::noop();
         }
 
-        let mut state = self.state.lock().unwrap();
+        let mut state = self.collector.state.lock().unwrap();
 
         // Does this metric already exist?
         if let Some(label_info) = state.info_tree.get_mut(&labels) {

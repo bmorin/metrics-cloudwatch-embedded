@@ -18,7 +18,7 @@ async fn function_handler(event: LambdaEvent<Request>) -> Result<Response, Error
 
     info!("Hello from function_handler");
 
-    metrics::increment_counter!("requests", "Method" => "Default");
+    metrics::counter!("requests", "Method" => "Default").increment(1);
 
     Ok(resp)
 }

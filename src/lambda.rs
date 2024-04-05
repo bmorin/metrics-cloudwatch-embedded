@@ -25,7 +25,7 @@
 //!
 //!     info!("Hello from function_handler");
 //!
-//!     metrics::increment_counter!("requests", "Method" => "Default");
+//!     metrics::counter!("requests", "Method" => "Default").increment(1);
 //!
 //!     Ok(Response {})
 //! }
@@ -73,11 +73,37 @@
 
 #![allow(dead_code)]
 use super::collector::Collector;
-use lambda_runtime::LambdaEvent;
+use lambda_runtime::{LambdaEvent, LambdaInvocation};
 use pin_project::pin_project;
 use std::future::Future;
 use std::pin::Pin;
 use std::task::{Context, Poll};
+use tower::Layer;
+
+/// [tower::Layer] for automatically [flushing](super::Collector::flush()) after each request and enabling
+/// `lambda` features in [Builder](super::Builder)
+///
+/// For composing your own [tower] stacks to input into the Rust Lambda Runtime
+pub struct MetricsLayer {
+    pub(crate) collector: &'static Collector,
+}
+
+impl MetricsLayer {
+    pub fn new(collector: &'static Collector) -> Self {
+        Self { collector }
+    }
+}
+
+impl<S> Layer<S> for MetricsLayer {
+    type Service = MetricsService<S>;
+
+    fn layer(&self, inner: S) -> Self::Service {
+        MetricsService {
+            metrics: self.collector,
+            inner,
+        }
+    }
+}
 
 /// [tower::Service] for automatically [flushing](super::Collector::flush()) after each request and enabling
 /// `lambda` features in [Builder](super::Builder)
@@ -99,9 +125,9 @@ impl<S> MetricsService<S> {
     }
 }
 
-impl<S, Request> tower::Service<LambdaEvent<Request>> for MetricsService<S>
+impl<S> tower::Service<LambdaInvocation> for MetricsService<S>
 where
-    S: tower::Service<LambdaEvent<Request>>,
+    S: tower::Service<LambdaInvocation>,
 {
     type Response = S::Response;
     type Error = S::Error;
@@ -111,7 +137,7 @@ where
         self.inner.poll_ready(cx)
     }
 
-    fn call(&mut self, req: LambdaEvent<Request>) -> Self::Future {
+    fn call(&mut self, req: LambdaInvocation) -> Self::Future {
         if let Some(prop_name) = self.metrics.config.lambda_request_id {
             self.metrics.set_property(prop_name, req.context.request_id.clone());
         }
@@ -173,29 +199,48 @@ where
     }
 }
 
-/// Helpers for starting the Lambda Rust runtime with a [tower::Service] wrapped by a [MetricsService]
+/// Helpers for starting the Lambda Rust runtime with a [tower::Service] with a
+/// [TracingLayer] and a [MetricsLayer]
 ///
 /// Reduces the amount of ceremony needed in `main()` for simple use cases
 ///
 pub mod service {
 
+    use core::fmt::Debug;
+
+    use futures::Stream;
+    use lambda_runtime::{layers::TracingLayer, IntoFunctionResponse};
+    use serde::{Deserialize, Serialize};
+    use tower::Service;
+
     use super::*;
 
     /// Start the Lambda Rust runtime with a given [`tower::Service<LambdaEvent<Request>>`]
-    /// which is then wrapped by new [MetricsService] with a given [Collector]
-    pub async fn run<S, Request, Response>(metrics: &'static Collector, inner: S) -> Result<(), lambda_runtime::Error>
+    /// which is then layered with [TracingLayer] and [MetricsLayer] with a given [Collector]
+    pub async fn run<'a, S, Request, Response, BufferedResponse, StreamingResponse, StreamItem, StreamError>(
+        metrics: &'static Collector,
+        inner: S,
+    ) -> Result<(), lambda_runtime::Error>
     where
-        S: tower::Service<LambdaEvent<Request>>,
-        S::Future: std::future::Future<Output = Result<Response, S::Error>>,
-        S::Error: std::fmt::Debug + std::fmt::Display,
-        Request: for<'de> serde::Deserialize<'de>,
-        Response: serde::Serialize,
+        S: Service<LambdaEvent<Request>, Response = Response>,
+        S::Future: Future<Output = Result<Response, S::Error>> + 'a,
+        S::Error: Into<lambda_runtime::Diagnostic<'a>> + Debug,
+        Request: for<'de> Deserialize<'de>,
+        Response: IntoFunctionResponse<BufferedResponse, StreamingResponse>,
+        BufferedResponse: Serialize,
+        StreamingResponse: Stream<Item = Result<StreamItem, StreamError>> + Unpin + Send + 'static,
+        StreamItem: Into<bytes::Bytes> + Send,
+        StreamError: Into<tower::BoxError> + Send + Debug,
     {
-        lambda_runtime::run(MetricsService::new::<Request, Response>(metrics, inner)).await
+        lambda_runtime::Runtime::new(inner)
+            .layer(TracingLayer::new())
+            .layer(MetricsLayer::new(metrics))
+            .run()
+            .await
     }
 
     /// Start the Lambda Rust runtime with a given [tower::Service<lambda_http::Request>]
-    /// which is then wrapped by new [MetricsService] with a given [Collector]
+    /// which is then layered with [TracingLayer] and [MetricsLayer] with a given [Collector]
     pub async fn run_http<'a, R, S, E>(metrics: &'static Collector, inner: S) -> Result<(), lambda_runtime::Error>
     where
         S: tower::Service<lambda_http::Request, Response = R, Error = E>,
@@ -208,16 +253,19 @@ pub mod service {
     }
 }
 
-/// Helpers for starting the Lambda Rust runtime with a handler function wrapped by the [MetricsService]
+/// Helpers for starting the Lambda Rust runtime with a handler function and
+/// a [lambda_runtime::layers::TracingLayer] and a [MetricsLayer]
 ///
 /// Reduces the amount of ceremony needed in `main()` for simple use cases
 ///
 pub mod handler {
 
+    use tower::service_fn;
+
     use super::*;
 
     /// Start the Lambda Rust runtime with a given [LambdaEvent] handler function
-    /// which is then wrapped by a new [MetricsService] with a given [Collector]
+    /// which is then layered with [lambda_runtime::layers::TracingLayer] and [MetricsLayer] with a given [Collector]
     pub async fn run<T, F, Request, Response>(
         metrics: &'static Collector,
         handler: T,
@@ -228,15 +276,11 @@ pub mod handler {
         Request: for<'de> serde::Deserialize<'de>,
         Response: serde::Serialize,
     {
-        lambda_runtime::run(MetricsService::new::<Request, Response>(
-            metrics,
-            lambda_runtime::service_fn(handler),
-        ))
-        .await
+        super::service::run(metrics, lambda_runtime::service_fn(handler)).await
     }
 
     /// Start the Lambda Rust runtime with a given [lambda_http::Request] handler function
-    /// which is then wrapped by a new [MetricsService] with a given [Collector]
+    /// which is then layered with [lambda_runtime::layers::TracingLayer] and [MetricsLayer] with a given [Collector]
     pub async fn run_http<'a, T, F, Response>(
         metrics: &'static Collector,
         handler: T,
@@ -246,6 +290,6 @@ pub mod handler {
         F: Future<Output = Result<Response, lambda_runtime::Error>> + Send + 'a,
         Response: lambda_http::IntoResponse,
     {
-        super::service::run(metrics, lambda_http::Adapter::from(lambda_http::service_fn(handler))).await
+        super::service::run(metrics, lambda_http::Adapter::from(service_fn(handler))).await
     }
 }

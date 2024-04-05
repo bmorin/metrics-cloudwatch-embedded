@@ -1,4 +1,9 @@
 ## v0.4.3 (2022-01-13)
+* updated lambda runtime to 0.11
+* updatd metrics to 0.22.3
+Thanks Peter Allwin (peterall)
+
+## v0.4.3 (2022-01-13)
 * updated lambda runtime to 0.9
 
 ## v0.4.2 (2022-07-31)

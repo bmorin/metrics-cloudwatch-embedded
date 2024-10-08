@@ -255,7 +255,7 @@ pub mod service {
 ///
 pub mod handler {
 
-    use tower::service_fn;
+    use lambda_http::service_fn;
 
     use super::*;
 

@@ -43,7 +43,7 @@
 //!     let metrics = metrics_cloudwatch_embedded::Builder::new()
 //!         .cloudwatch_namespace("MetricsExample")
 //!         .with_dimension("function", std::env::var("AWS_LAMBDA_FUNCTION_NAME").unwrap())
-//!         .lambda_cold_start_span(info_span!("cold start").entered())
+//!         .lambda_cold_start_span(info_span!("cold start"))
 //!         .lambda_cold_start_metric("ColdStart")
 //!         .with_lambda_request_id("RequestId")
 //!         .init()
@@ -145,9 +145,11 @@ where
             self.metrics.set_property(prop_name, req.context.xray_trace_id.clone());
         }
 
+        let mut cold_start_span = None;
         if let Some(counter_name) = self.metrics.config.lambda_cold_start {
             static COLD_START_BEGIN: std::sync::Once = std::sync::Once::new();
             COLD_START_BEGIN.call_once(|| {
+                cold_start_span = self.metrics.take_cold_start_span().map(|span| span.entered());
                 self.metrics
                     .write_single(counter_name, Some(metrics::Unit::Count), 1, std::io::stdout())
                     .expect("failed to flush cold start metric");
@@ -158,6 +160,7 @@ where
         MetricsServiceFuture {
             metrics: self.metrics,
             inner: self.inner.call(req),
+            cold_start_span,
         }
     }
 }
@@ -169,6 +172,7 @@ pub struct MetricsServiceFuture<F> {
     metrics: &'static Collector,
     #[pin]
     inner: F,
+    cold_start_span: Option<tracing::span::EnteredSpan>,
 }
 
 impl<F, Response, Error> Future for MetricsServiceFuture<F>
@@ -189,7 +193,7 @@ where
 
             static COLD_START_END: std::sync::Once = std::sync::Once::new();
             COLD_START_END.call_once(|| {
-                this.metrics.end_cold_start();
+                let _span = this.cold_start_span.take();
             });
 
             return Poll::Ready(result);

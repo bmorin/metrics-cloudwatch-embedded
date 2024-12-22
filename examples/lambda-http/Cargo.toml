@@ -6,7 +6,7 @@ edition = "2021"
 [dependencies]
 lambda_http = { version = "0.13", default-features = false, features = ["apigw_http"] }
 lambda_runtime = "0.13"
-metrics = "0.23"
+metrics = "0.24"
 metrics_cloudwatch_embedded = { path = "../..", features = ["lambda"] }
 serde = {version = "1.0", features = ["derive"] }
 tokio = { version = "1", features = ["macros"] }

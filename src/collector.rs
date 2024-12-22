@@ -455,7 +455,7 @@ impl metrics::Recorder for Recorder {
                     }
                     MetricInfo::Counter(_) => {
                         error!("Unable to register histogram {key} as it was already registered as a counter");
-                        metrics::Histogram::noop();
+                        return metrics::Histogram::noop();
                     }
                     MetricInfo::Gauge(_) => {
                         error!("Unable to register histogram {key} as it was already registered as a gauge");

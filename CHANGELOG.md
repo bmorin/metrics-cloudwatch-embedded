@@ -1,3 +1,13 @@
+## v0.5.1 (2024-12-21)
+* updated lambda runtime to 0.13
+* updatd metrics to 0.24
+Thanks Peter Allwin (peterall) and Andrey Kutejko (andy128k)
+
+## v0.5.0 (2024-04-05)
+* updated lambda runtime to 0.11
+* updatd metrics to 0.22.3
+Thanks Peter Allwin (peterall)
+
 ## v0.5.0 (2024-04-05)
 * updated lambda runtime to 0.11
 * updatd metrics to 0.22.3

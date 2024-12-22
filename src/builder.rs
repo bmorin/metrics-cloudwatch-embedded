@@ -16,7 +16,7 @@ pub struct Builder {
     default_dimensions: Vec<(SharedString, SharedString)>,
     timestamp: Option<u64>,
     #[cfg(feature = "lambda")]
-    lambda_cold_start_span: Option<tracing::span::EnteredSpan>,
+    lambda_cold_start_span: Option<tracing::span::Span>,
     #[cfg(feature = "lambda")]
     lambda_cold_start: Option<&'static str>,
     #[cfg(feature = "lambda")]
@@ -72,7 +72,7 @@ impl Builder {
     /// *requires the `lambda` feature flag*
     ///
     #[cfg(feature = "lambda")]
-    pub fn lambda_cold_start_span(mut self, cold_start_span: tracing::span::EnteredSpan) -> Self {
+    pub fn lambda_cold_start_span(mut self, cold_start_span: tracing::span::Span) -> Self {
         self.lambda_cold_start_span = Some(cold_start_span);
         self
     }
@@ -121,7 +121,7 @@ impl Builder {
 
     /// Private helper for consuming the builder into collector configuration (lambda)
     #[cfg(feature = "lambda")]
-    fn build(self) -> Result<(collector::Config, Option<tracing::span::EnteredSpan>), Error> {
+    fn build(self) -> Result<(collector::Config, Option<tracing::span::Span>), Error> {
         Ok((
             collector::Config {
                 cloudwatch_namespace: self.cloudwatch_namespace.ok_or("cloudwatch_namespace missing")?,

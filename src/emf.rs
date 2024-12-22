@@ -61,7 +61,7 @@ pub fn unit_to_str(unit: &metrics::Unit) -> &'static str {
         metrics::Unit::Microseconds => "Microseconds",
         metrics::Unit::Nanoseconds => "Nanoseconds",
         metrics::Unit::Tebibytes => "Terabytes",
-        metrics::Unit::Gigibytes => "Gigabytes",
+        metrics::Unit::Gibibytes => "Gigabytes",
         metrics::Unit::Mebibytes => "Megabytes",
         metrics::Unit::Kibibytes => "Kilobytes",
         metrics::Unit::Bytes => "Bytes",

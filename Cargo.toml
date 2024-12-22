@@ -21,11 +21,11 @@ lambda = ["dep:http", "dep:lambda_http", "dep:lambda_runtime", "dep:pin-project"
 http = { version = "1.0", optional = true }
 lambda_http = { version = "0.13", optional = true }
 lambda_runtime = { version = "0.13", optional = true }
-metrics = "0.23"
+metrics = "0.24"
 pin-project = { version = "1", optional = true }
 serde = {version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-tower = {version = "0.5", optional = true }
+tower = {version = "0.4", optional = true }
 tracing = "0.1"
 futures = "0.3"
 bytes = "1"

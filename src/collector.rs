@@ -77,7 +77,7 @@ struct CollectorState {
     properties: BTreeMap<SharedString, Value>,
     /// Cold start span to drop after first invoke
     #[cfg(feature = "lambda")]
-    lambda_cold_start_span: Option<tracing::span::EnteredSpan>,
+    lambda_cold_start_span: Option<tracing::span::Span>,
 }
 
 /// Embedded CloudWatch Metrics Collector + Emitter
@@ -103,10 +103,7 @@ pub struct Collector {
 }
 
 impl Collector {
-    pub fn new(
-        config: Config,
-        #[cfg(feature = "lambda")] lambda_cold_start_span: Option<tracing::span::EnteredSpan>,
-    ) -> Self {
+    pub fn new(config: Config, #[cfg(feature = "lambda")] lambda_cold_start_span: Option<tracing::span::Span>) -> Self {
         Self {
             state: Mutex::new(CollectorState {
                 info_tree: BTreeMap::new(),
@@ -308,9 +305,9 @@ impl Collector {
     }
 
     #[cfg(feature = "lambda")]
-    pub fn end_cold_start(&self) {
+    pub fn take_cold_start_span(&self) -> Option<tracing::span::Span> {
         let mut state = self.state.lock().unwrap();
-        state.lambda_cold_start_span = None;
+        state.lambda_cold_start_span.take()
     }
 }
 

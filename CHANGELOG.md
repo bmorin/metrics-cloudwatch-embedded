@@ -8,11 +8,6 @@ Thanks Peter Allwin (peterall) and Andrey Kutejko (andy128k)
 * updatd metrics to 0.22.3
 Thanks Peter Allwin (peterall)
 
-## v0.5.0 (2024-04-05)
-* updated lambda runtime to 0.11
-* updatd metrics to 0.22.3
-Thanks Peter Allwin (peterall)
-
 ## v0.4.3 (2024-01-13)
 * updated lambda runtime to 0.9
 

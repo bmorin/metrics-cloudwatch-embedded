@@ -1,4 +1,4 @@
-use lambda_http::{Body, Error, Request, Response};
+use lambda_http::{Error, IntoResponse, Request, Response};
 use metrics_cloudwatch_embedded::lambda::handler::run_http;
 use serde::Deserialize;
 use tracing::{info, info_span};
@@ -6,12 +6,12 @@ use tracing::{info, info_span};
 #[derive(Deserialize)]
 struct Payload {}
 
-async fn function_handler(_event: Request) -> Result<Response<Body>, Error> {
+async fn function_handler(_event: Request) -> Result<impl IntoResponse, Error> {
     info!("Hello from function_handler");
 
     metrics::counter!("requests", "Method" => "Default").increment(1);
 
-    let resp = Response::builder().status(200).body("".into()).map_err(Box::new)?;
+    let resp = Response::builder().status(200).body("".to_string()).map_err(Box::new)?;
     Ok(resp)
 }
 

@@ -186,8 +186,6 @@ where
         let this = self.project();
 
         if let Poll::Ready(result) = this.inner.poll(cx) {
-            let result = result.map_err(Into::into);
-
             // Flush our metrics after the inner service is finished
             this.metrics.flush(std::io::stdout()).expect("failed to flush metrics");
 

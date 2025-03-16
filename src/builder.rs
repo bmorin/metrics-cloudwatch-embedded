@@ -125,6 +125,7 @@ impl Builder {
             cloudwatch_namespace: self.cloudwatch_namespace.ok_or("cloudwatch_namespace missing")?,
             default_dimensions: self.default_dimensions,
             timestamp: self.timestamp,
+            emit_zeros: false,
         })
     }
 

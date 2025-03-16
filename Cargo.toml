@@ -1,6 +1,6 @@
 [package]
 name = "metrics_cloudwatch_embedded"
-version = "0.5.1"
+version = "0.5.2"
 authors = ["brianmorin <brianrossmorin@gmail.com>"]
 edition = "2021"
 rust-version = "1.81"
@@ -32,6 +32,7 @@ bytes = "1"
 
 [dev-dependencies]
 criterion = { version = "0.5", features = ["async_tokio"] }
+rusty-fork = "0.3.0"
 tokio = { version = "1", features = ["macros"] }
 tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt", "env-filter", "json"] }
 

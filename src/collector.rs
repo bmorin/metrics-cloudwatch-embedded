@@ -23,6 +23,7 @@ pub struct Config {
     pub cloudwatch_namespace: SharedString,
     pub default_dimensions: Vec<(SharedString, SharedString)>,
     pub timestamp: Option<u64>,
+    pub emit_zeros: bool,
     #[cfg(feature = "lambda")]
     pub lambda_cold_start: Option<&'static str>,
     #[cfg(feature = "lambda")]
@@ -192,8 +193,8 @@ impl Collector {
                     MetricInfo::Counter(counter) => {
                         let value = counter.value.swap(0, Ordering::Relaxed);
 
-                        // Omit this metric if there is no delta since last flushed
-                        if value != 0 {
+                        // Omit this metric if there is no delta since last flushed, unless we're configured to emit zeros
+                        if value != 0 || self.config.emit_zeros {
                             emf.aws.cloudwatch_metrics[0].metrics.push(emf::EmbeddedMetric {
                                 name: key.name(),
                                 unit: state.units.get(key.name()).map(emf::unit_to_str),

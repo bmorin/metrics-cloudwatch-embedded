@@ -15,6 +15,7 @@ pub struct Builder {
     cloudwatch_namespace: Option<SharedString>,
     default_dimensions: Vec<(SharedString, SharedString)>,
     timestamp: Option<u64>,
+    emit_zeros: bool,
     #[cfg(feature = "lambda")]
     lambda_cold_start_span: Option<tracing::span::Span>,
     #[cfg(feature = "lambda")]
@@ -32,6 +33,7 @@ impl Builder {
             cloudwatch_namespace: Default::default(),
             default_dimensions: Default::default(),
             timestamp: None,
+            emit_zeros: false,
             #[cfg(feature = "lambda")]
             lambda_cold_start_span: None,
             #[cfg(feature = "lambda")]
@@ -64,6 +66,13 @@ impl Builder {
     /// Sets the timestamp for flush to a constant value to simplify tests
     pub fn with_timestamp(mut self, timestamp: u64) -> Self {
         self.timestamp = Some(timestamp);
+        self
+    }
+
+    /// If set to true, the collector will emit a zero value metrics instead of skipping
+    /// defaults to `false`
+    pub fn emit_zeros(mut self, emit_zeros: bool) -> Self {
+        self.emit_zeros = emit_zeros;
         self
     }
 
@@ -116,6 +125,7 @@ impl Builder {
             cloudwatch_namespace: self.cloudwatch_namespace.ok_or("cloudwatch_namespace missing")?,
             default_dimensions: self.default_dimensions,
             timestamp: self.timestamp,
+            emit_zeros: false,
         })
     }
 
@@ -127,6 +137,7 @@ impl Builder {
                 cloudwatch_namespace: self.cloudwatch_namespace.ok_or("cloudwatch_namespace missing")?,
                 default_dimensions: self.default_dimensions,
                 timestamp: self.timestamp,
+                emit_zeros: self.emit_zeros,
                 lambda_cold_start: self.lambda_cold_start,
                 lambda_request_id: self.lambda_request_id,
                 lambda_xray_trace_id: self.lambda_xray_trace_id,

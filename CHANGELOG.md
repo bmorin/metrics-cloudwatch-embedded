@@ -1,3 +1,9 @@
+## v0.6.0 (2024-12-21)
+* updated lambda http to 0.14
+* updated tower to 0.5.2
+* MSRV increased to 1.81
+* added Builder::emit_zeros(bool) for optionally emitting metrics with a delta of zero per feedback from Oliver Gavin (OliverGavin)
+
 ## v0.5.1 (2024-12-21)
 * updated lambda runtime to 0.13
 * updatd metrics to 0.24

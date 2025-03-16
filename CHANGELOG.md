@@ -1,4 +1,4 @@
-## v0.6.0 (2024-12-21)
+## v0.6.0 (2025-05-16)
 * updated lambda http to 0.14
 * updated tower to 0.5.2
 * MSRV increased to 1.81

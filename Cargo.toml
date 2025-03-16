@@ -1,6 +1,6 @@
 [package]
 name = "metrics_cloudwatch_embedded"
-version = "0.5.2"
+version = "0.6.0"
 authors = ["brianmorin <brianrossmorin@gmail.com>"]
 edition = "2021"
 rust-version = "1.81"

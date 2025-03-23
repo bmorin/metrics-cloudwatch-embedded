@@ -17,11 +17,19 @@ Resources:
     Type: AWS::Serverless::Api
     Properties:
       StageName: integ-test
-      Auth:
-        DefaultAuthorizer: MyLambdaAuthorizer
-        Authorizers:
-          MyLambdaAuthorizer:
-            FunctionArn: !GetAtt AuthorizerFunction.Arn
+
+  SimpleFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: rust-cargolambda
+      BuildProperties:
+        Binary: simple
+    Properties:
+      CodeUri: ./
+      Handler: bootstrap
+      Runtime: provided.al2023
+      Role: !Ref LambdaRole
+      
   HttpFunction:
     Type: AWS::Serverless::Function
     Metadata:
@@ -41,22 +49,7 @@ Resources:
             Path: /hello
             Method: get
 
-  AuthorizerFunction:
-    Type: AWS::Serverless::Function
-    Metadata:
-      BuildMethod: rust-cargolambda
-      BuildProperties:
-        Binary: authorizer
-    Properties:
-      CodeUri: ./
-      Handler: bootstrap
-      Runtime: provided.al2023
-      Role: !Ref LambdaRole
-      Environment:
-        Variables:
-          SECRET_TOKEN: !Ref SecretToken
-
 Outputs:
-  HelloApiEndpoint:
+  HttpApiEndpoint:
     Description: "API Gateway endpoint URL for metrics-cloudwatch-embedded integration test"
     Value: !Sub "https://${API}.execute-api.${AWS::Region}.amazonaws.com/integ-test/hello/"

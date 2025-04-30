@@ -414,7 +414,7 @@ impl metrics::Recorder for Recorder {
             } else {
                 // Label exists, gauge does not
                 let value = Arc::new(AtomicU64::new(0));
-                label_info.insert(key.clone(), MetricInfo::Counter(CounterInfo { value: value.clone() }));
+                label_info.insert(key.clone(), MetricInfo::Gauge(GaugeInfo { value: value.clone() }));
 
                 return metrics::Gauge::from_arc(value);
             }

@@ -11,7 +11,7 @@ lint = true
 [default.deploy.parameters]
 capabilities = "CAPABILITY_IAM"
 confirm_changeset = true
-s3_bucket = "aws-lambda-rust-runtime-integration-testing"
+s3_bucket = "metrics-cloudwatch-embedded-integration-test"
 
 [default.sync.parameters]
 watch = true

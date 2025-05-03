@@ -135,12 +135,6 @@ Unless you explicitly state otherwise, any contribution intentionally submitted
 for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
 licensed as above, without any additional terms or conditions.
 
-Feedback
---------
-
-Your feedback is important, if you evalute or use this crate please leave a post in our 
-[Github Feedback Discussion](https://github.com/BMorinDrifter/metrics-cloudwatch-embedded/discussions/categories/feeback)
-
 Thanks
 ------
 * Simon Andersson (ramn) and contributors - For the metrics_cloudwatch crate I used as a reference

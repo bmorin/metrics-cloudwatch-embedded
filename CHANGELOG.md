@@ -1,4 +1,4 @@
-## v0.6.0 (2025-05-3)
+## v0.6.1 (2025-05-3)
 * Fix bug re-registering gaugues contributed by Øyvind Ringnes (oringnes)
 
 ## v0.6.0 (2025-03-16)

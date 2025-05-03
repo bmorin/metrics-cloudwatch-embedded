@@ -1,6 +1,5 @@
 ## v0.6.0 (2025-05-3)
 * Fix bug re-registering gaugues contributed by Øyvind Ringnes (oringnes)
-* Update to 2024 edition
 
 ## v0.6.0 (2025-03-16)
 * updated lambda http to 0.14

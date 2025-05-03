@@ -1,4 +1,7 @@
-## v0.6.0 (2025-05-16)
+## v0.6.0 (2025-05-3)
+* Fix bug re-registering gaugues contributed by Øyvind Ringnes (oringnes)
+
+## v0.6.0 (2025-03-16)
 * updated lambda http to 0.14
 * updated tower to 0.5.2
 * MSRV increased to 1.81

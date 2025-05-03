@@ -89,7 +89,7 @@ mod tests {
             assert_eq!(
                 output_str,
                 r#"{"_aws":{"Timestamp":1687657545423,"CloudWatchMetrics":[{"Namespace":"namespace","Dimensions":[["Address","Port","module","api"]],"Metrics":[{"Name":"success","Unit":"Count"},{"Name":"thing"}]}]},"Address":"10.172.207.225","Port":"7779","api":"a_function","module":"directory","success":1,"thing":7.11}
-"#
+    "#
             );
         }
     }

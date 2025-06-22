@@ -1,5 +1,6 @@
 ## v0.7.0 (2025-06-22)
 * Update lambda_http and lambda_runtime dependencies contributed by Peter Allwin (peterallwin)
+* MSRV increased to 1.82
 
 ## v0.6.1 (2025-05-3)
 * Fix bug re-registering gaugues contributed by Øyvind Ringnes (oringnes)
@@ -7,7 +8,7 @@
 ## v0.6.0 (2025-03-16)
 * updated lambda http to 0.14
 * updated tower to 0.5.2
-* MSRV increased to 1.82
+* MSRV increased to 1.81
 * added Builder::emit_zeros(bool) for optionally emitting metrics with a delta of zero per feedback from Oliver Gavin (OliverGavin)
 
 ## v0.5.1 (2024-12-21)

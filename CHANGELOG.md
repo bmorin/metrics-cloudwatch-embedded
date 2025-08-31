@@ -1,3 +1,6 @@
+## v0.8.0 (2025-06-22)
+* Update lambda_http dependency contributed by Roger Wilson (CaptainJiNX)
+
 ## v0.7.0 (2025-06-22)
 * Update lambda_http and lambda_runtime dependencies contributed by Peter Allwin (peterallwin)
 * MSRV increased to 1.82

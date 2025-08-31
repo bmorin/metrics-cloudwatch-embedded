@@ -39,7 +39,7 @@ It also provides optional helpers for:
 In your Cargo.toml add:
 ```toml
 metrics = "0.24"
-metrics_cloudwatch_embedded = {  version = "0.6.0", features = ["lambda"] }
+metrics_cloudwatch_embedded = {  version = "0.7.0", features = ["lambda"] }
 tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt", "env-filter", "json"] }
 ```
 
@@ -121,7 +121,7 @@ more than 30 dimensions/labels will fail with an error via the `tracing` crate
 Supported Rust Versions (MSRV)
 ------------------------------
 
-This crate requires a minimum of Rust 1.81, and is not guaranteed to build on compiler versions earlier than that.
+This crate requires a minimum of Rust 1.82, and is not guaranteed to build on compiler versions earlier than that.
 
 License
 -------
@@ -134,12 +134,6 @@ Contribution
 Unless you explicitly state otherwise, any contribution intentionally submitted
 for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
 licensed as above, without any additional terms or conditions.
-
-Feedback
---------
-
-Your feedback is important, if you evalute or use this crate please leave a post in our 
-[Github Feedback Discussion](https://github.com/BMorinDrifter/metrics-cloudwatch-embedded/discussions/categories/feeback)
 
 Thanks
 ------

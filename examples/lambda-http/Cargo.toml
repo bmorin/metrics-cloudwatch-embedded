@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-lambda_http = { version = "0.14", default-features = false, features = ["apigw_http"] }
-lambda_runtime = "0.13"
+lambda_http = { version = "0.16", default-features = false, features = ["apigw_http"] }
+lambda_runtime = "0.14"
 metrics = "0.24"
 metrics_cloudwatch_embedded = { path = "../..", features = ["lambda"] }
 serde = {version = "1.0", features = ["derive"] }

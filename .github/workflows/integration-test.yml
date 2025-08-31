@@ -21,7 +21,7 @@ jobs:
         - name: install Zig toolchain
           uses: korandoru/setup-zig@v1
           with:
-            zig-version: 0.10.0
+            zig-version: 0.14.1
         - name: install SAM
           uses: aws-actions/setup-sam@v2
           with:

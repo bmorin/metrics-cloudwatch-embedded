@@ -3,7 +3,7 @@ name = "metrics_cloudwatch_embedded"
 version = "0.8.0"
 authors = ["brianmorin <brianrossmorin@gmail.com>"]
 edition = "2021"
-rust-version = "1.82"
+rust-version = "1.90"
 
 description = "CloudWatch embedded metrics format emitter for the metrics crate"
 license = "Apache-2.0"

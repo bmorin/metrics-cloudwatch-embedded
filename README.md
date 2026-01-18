@@ -27,12 +27,12 @@ metrics
 
 AWS Lambda Example
 ------------------
-The [Lambda Runtime](https://crates.io/crates/lambda-runtime) intergration feature handles flushing metrics 
+The [Lambda Runtime](https://crates.io/crates/lambda-runtime) integration feature handles flushing metrics 
 after each invoke via either `run()` alternatives or `MetricService` which implements the 
 [`tower::Service`](https://crates.io/crates/tower) trait.  
 
 It also provides optional helpers for:
-* emiting a metric on cold starts
+* emitting a metric on cold starts
 * wrapping cold starts in a [`tracing`](https://crates.io/crates/tracing) span
 * decorating metric documents with request id and/or x-ray trace id
 
@@ -139,3 +139,9 @@ Thanks
 ------
 * Simon Andersson (ramn) and contributors - For the metrics_cloudwatch crate I used as a reference
 * Toby Lawrence (tobz) - For answering my metrics crate questions before I even had something working
+
+Continuation/Abandonment
+-------------------------
+
+I grant permission for Amazon Web Services (https://github.com/aws) to take over this project if I
+am no longer able to maintain it or have abandoned it.

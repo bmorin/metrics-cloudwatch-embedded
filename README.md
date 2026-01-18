@@ -27,19 +27,19 @@ metrics
 
 AWS Lambda Example
 ------------------
-The [Lambda Runtime](https://crates.io/crates/lambda-runtime) intergration feature handles flushing metrics 
+The [Lambda Runtime](https://crates.io/crates/lambda-runtime) integration feature handles flushing metrics 
 after each invoke via either `run()` alternatives or `MetricService` which implements the 
 [`tower::Service`](https://crates.io/crates/tower) trait.  
 
 It also provides optional helpers for:
-* emiting a metric on cold starts
+* emitting a metric on cold starts
 * wrapping cold starts in a [`tracing`](https://crates.io/crates/tracing) span
 * decorating metric documents with request id and/or x-ray trace id
 
 In your Cargo.toml add:
 ```toml
 metrics = "0.24"
-metrics_cloudwatch_embedded = {  version = "0.8.0", features = ["lambda"] }
+metrics_cloudwatch_embedded = {  version = "0.9.0", features = ["lambda"] }
 tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt", "env-filter", "json"] }
 ```
 
@@ -121,7 +121,7 @@ more than 30 dimensions/labels will fail with an error via the `tracing` crate
 Supported Rust Versions (MSRV)
 ------------------------------
 
-This crate requires a minimum of Rust 1.90, and is not guaranteed to build on compiler versions earlier than that.
+This crate requires a minimum of Rust 1.84, and is not guaranteed to build on compiler versions earlier than that.
 
 License
 -------
@@ -139,3 +139,9 @@ Thanks
 ------
 * Simon Andersson (ramn) and contributors - For the metrics_cloudwatch crate I used as a reference
 * Toby Lawrence (tobz) - For answering my metrics crate questions before I even had something working
+
+Continuation/Abandonment
+-------------------------
+
+I grant permission for Amazon Web Services (https://github.com/aws) to take over this project if I
+am no longer able to maintain it or have abandoned it.

@@ -145,4 +145,39 @@ mod tests {
             );
         }
     }
+
+    rusty_fork_test! {
+        #[test]
+        fn too_many_histogram_values() {
+        use std::sync::mpsc;
+        use std::time::Duration;
+
+        let (tx, rx) = mpsc::channel();
+        std::thread::spawn(move || {
+            let port = format!("{}", 7779);
+            let metrics = builder::Builder::new()
+                .cloudwatch_namespace("namespace")
+                .with_dimension("Address", "10.172.207.225")
+                .with_dimension("Port", port)
+                .with_timestamp(1687657545423)
+                .emit_zeros(true)
+                .init()
+                .unwrap();
+
+            metrics::describe_counter!("success", metrics::Unit::Count, "");
+            metrics::describe_histogram!("runtime", metrics::Unit::Milliseconds, "");
+
+            for _ in 0..200 {
+                metrics::histogram!("runtime", "module" => "directory", "api" => "a_function").record(4.0);
+            }
+
+            let mut output = Vec::new();
+            metrics.flush(&mut output).unwrap();
+            tx.send(()).unwrap();
+        });
+
+        rx.recv_timeout(Duration::from_secs(3))
+            .expect("Test timed out after 3 seconds");
+        }
+    }
 }

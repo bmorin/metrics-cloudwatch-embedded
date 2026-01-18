@@ -31,7 +31,7 @@ metrics = "0.24"
 pin-project = { version = "1", optional = true }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-tower = { version = "0.5.2", optional = true }
+tower = { version = "0.5.3", optional = true }
 tracing = "0.1"
 futures = "0.3"
 bytes = "1"

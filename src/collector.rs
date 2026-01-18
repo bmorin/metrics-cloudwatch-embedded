@@ -40,8 +40,8 @@ struct HistogramHandle {
 impl metrics::HistogramFn for HistogramHandle {
     // Sends the metric value to our sync_channel
     fn record(&self, value: f64) {
-        if self.sender.send(value).is_err() {
-            error!("Failed to record histogram value, more than 100 unflushed values?");
+        if let Err(e) = self.sender.try_send(value) {
+            error!("Failed to record histogram value, more than 100 unflushed values? {e:?}");
         }
     }
 }

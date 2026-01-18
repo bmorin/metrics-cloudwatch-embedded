@@ -1,3 +1,9 @@
+## v0.9.0 (2026-01-17)
+* Update lambda_http dependency contributed by Roger Wilson (CaptainJiNX)
+* Correctly error and not block if there is an attempt to send more than 100 histogram values before flushing contributed by Aaron1011
+ (Aaron1011)
+* MSRV increased to 1.84
+
 ## v0.8.0 (2025-06-22)
 * Update lambda_http dependency contributed by Roger Wilson (CaptainJiNX)
 

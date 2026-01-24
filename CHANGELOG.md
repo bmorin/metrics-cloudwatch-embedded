@@ -1,3 +1,8 @@
+## v0.10.0 (2026-01-24)
+* Added auto-flush feature with `Builder::with_auto_flush()` and `Builder::with_auto_flush_interval()` for periodic background flushing to stdout contributed by Michel Majdalani (MichelMajdalani)
+* Added tokio dependency (time, rt features) for auto-flush background task
+* Refactored Builder::build() to return Collector directly for cleaner code
+
 ## v0.9.0 (2026-01-17)
 * Update lambda_http dependency contributed by Roger Wilson (CaptainJiNX)
 * Correctly error and not block if there is an attempt to send more than 100 histogram values before flushing contributed by Aaron1011

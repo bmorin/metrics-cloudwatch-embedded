@@ -25,6 +25,35 @@ metrics
     .flush(std::io::stdout());
 ```
 
+Auto-Flush Feature
+------------------
+The `auto-flush` feature enables periodic background flushing of metrics to stdout. This is useful for:
+- Long-running Lambda functions where you want intermediate metrics before completion
+- Capturing metrics before a potential timeout or crash
+- Reducing the risk of losing metrics if a function fails
+
+```rust
+// Enable auto-flush with default 30-second interval
+let metrics = metrics_cloudwatch_embedded::Builder::new()
+    .cloudwatch_namespace("MyApplication")
+    .with_auto_flush()
+    .init()
+    .unwrap();
+
+// Or with a custom interval
+use std::time::Duration;
+
+let metrics = metrics_cloudwatch_embedded::Builder::new()
+    .cloudwatch_namespace("MyApplication")
+    .with_auto_flush_interval(Duration::from_secs(15))
+    .init()
+    .unwrap();
+```
+
+Auto-flush requires a tokio runtime (always available since tokio is a dependency).
+The Lambda integration will still perform a final flush at the end of each invocation to capture any
+remaining metrics not picked up by the periodic flush.
+
 AWS Lambda Example
 ------------------
 The [Lambda Runtime](https://crates.io/crates/lambda-runtime) integration feature handles flushing metrics 

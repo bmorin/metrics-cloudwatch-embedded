@@ -39,6 +39,8 @@ async fn main() -> Result<(), Error> {
         .lambda_cold_start_span(info_span!("cold start"))
         .lambda_cold_start_metric("ColdStart")
         .with_lambda_request_id("RequestId")
+        // Enable auto-flush for long-running functions (optional, flushes every 30s)
+        .with_auto_flush()
         .init()
         .unwrap();
 

@@ -49,6 +49,12 @@ pub use {builder::Builder, collector::Collector};
 #[doc(hidden)]
 pub type Error = Box<dyn std::error::Error + Send + Sync + 'static>;
 
+/// Default interval for auto-flush (30 seconds)
+///
+/// Use with [`Builder::with_auto_flush_interval`] or simply call [`Builder::with_auto_flush`]
+/// which uses this default.
+pub const DEFAULT_AUTO_FLUSH_INTERVAL: std::time::Duration = std::time::Duration::from_secs(30);
+
 mod builder;
 mod collector;
 mod emf;

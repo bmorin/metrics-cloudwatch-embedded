@@ -180,4 +180,137 @@ mod tests {
             .expect("Test timed out after 3 seconds");
         }
     }
+
+    rusty_fork_test! {
+        /// Test that auto-flush can be configured and the collector initializes correctly.
+        /// This test verifies the builder accepts auto-flush configuration and that
+        /// metrics can still be recorded and manually flushed when auto-flush is enabled.
+        #[test]
+        fn auto_flush_with_manual_flush() {
+            use std::time::Duration;
+
+            // Create a tokio runtime for the auto-flush background task
+            let rt = tokio::runtime::Builder::new_current_thread()
+                .enable_time()
+                .build()
+                .unwrap();
+
+            rt.block_on(async {
+                let metrics = builder::Builder::new()
+                    .cloudwatch_namespace("auto_flush_test")
+                    .with_dimension("test", "true")
+                    .with_timestamp(1687657545423)
+                    // Use a long interval so it doesn't fire during the test
+                    .with_auto_flush_interval(Duration::from_secs(3600))
+                    .init()
+                    .unwrap();
+
+                // Record some metrics
+                metrics::counter!("test_counter", "label" => "value").increment(5);
+                metrics::gauge!("test_gauge", "label" => "value").set(42.0);
+                metrics::histogram!("test_histogram", "label" => "value").record(1.5);
+                metrics::histogram!("test_histogram", "label" => "value").record(2.5);
+
+                // Manual flush should still work
+                let mut output = Vec::new();
+                metrics.flush(&mut output).unwrap();
+                let output_str = std::str::from_utf8(&output).unwrap();
+
+                // Verify the output contains our metrics
+                assert!(output_str.contains("test_counter"));
+                assert!(output_str.contains("test_gauge"));
+                assert!(output_str.contains("test_histogram"));
+                assert!(output_str.contains("\"test_counter\":5"));
+                assert!(output_str.contains("\"test_gauge\":42.0"));
+                assert!(output_str.contains("[1.5,2.5]"));
+            });
+        }
+    }
+
+    rusty_fork_test! {
+        /// Test that auto-flush default interval can be configured.
+        #[test]
+        fn auto_flush_default_interval() {
+            let rt = tokio::runtime::Builder::new_current_thread()
+                .enable_time()
+                .build()
+                .unwrap();
+
+            rt.block_on(async {
+                let metrics = builder::Builder::new()
+                    .cloudwatch_namespace("auto_flush_default")
+                    .with_timestamp(1687657545423)
+                    .with_auto_flush() // Uses DEFAULT_AUTO_FLUSH_INTERVAL (30s)
+                    .init()
+                    .unwrap();
+
+                // Just verify it initializes and we can record metrics
+                metrics::counter!("request_count").increment(1);
+
+                let mut output = Vec::new();
+                metrics.flush(&mut output).unwrap();
+                let output_str = std::str::from_utf8(&output).unwrap();
+                assert!(output_str.contains("request_count"));
+            });
+        }
+    }
+
+    rusty_fork_test! {
+        /// Test that auto-flush with a custom writer captures output correctly.
+        /// This verifies the with_auto_flush_writer functionality works as expected.
+        #[test]
+        fn auto_flush_custom_writer() {
+            use std::sync::{Arc, Mutex};
+            use std::time::Duration;
+
+            // Helper wrapper to make Arc<Mutex<Vec<u8>>> implement Write
+            struct MutexWriter(Arc<Mutex<Vec<u8>>>);
+            impl std::io::Write for MutexWriter {
+                fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+                    self.0.lock().unwrap().write(buf)
+                }
+                fn flush(&mut self) -> std::io::Result<()> {
+                    self.0.lock().unwrap().flush()
+                }
+            }
+
+            let rt = tokio::runtime::Builder::new_current_thread()
+                .enable_time()
+                .build()
+                .unwrap();
+
+            rt.block_on(async {
+                // Create a shared buffer to capture auto-flush output
+                let buffer: Arc<Mutex<Vec<u8>>> = Arc::new(Mutex::new(Vec::new()));
+                let buffer_clone = buffer.clone();
+
+                let _metrics = builder::Builder::new()
+                    .cloudwatch_namespace("auto_flush_writer_test")
+                    .with_timestamp(1687657545423)
+                    // Use a short interval so the test completes quickly
+                    .with_auto_flush_writer(Duration::from_millis(50), move || {
+                        MutexWriter(buffer_clone.clone())
+                    })
+                    .init()
+                    .unwrap();
+
+                // Record some metrics
+                metrics::counter!("auto_counter", "source" => "test").increment(42);
+                metrics::gauge!("auto_gauge", "source" => "test").set(3.14);
+
+                // Wait for auto-flush to trigger (wait longer than interval)
+                tokio::time::sleep(Duration::from_millis(100)).await;
+
+                // Verify the buffer captured the metrics output
+                let captured = buffer.lock().unwrap();
+                let output_str = std::str::from_utf8(&captured).unwrap();
+
+                assert!(output_str.contains("auto_counter"), "Expected auto_counter in output: {}", output_str);
+                assert!(output_str.contains("auto_gauge"), "Expected auto_gauge in output: {}", output_str);
+                assert!(output_str.contains("\"auto_counter\":42"), "Expected counter value 42 in output: {}", output_str);
+                assert!(output_str.contains("\"auto_gauge\":3.14"), "Expected gauge value 3.14 in output: {}", output_str);
+                assert!(output_str.contains("auto_flush_writer_test"), "Expected namespace in output: {}", output_str);
+            });
+        }
+    }
 }
